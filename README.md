@@ -1,1 +1,1 @@
-# picross-py
+# py-cross
