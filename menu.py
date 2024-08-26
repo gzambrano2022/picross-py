@@ -5,7 +5,7 @@ from board import *
 def run():
 
     pygame.init()
-    window = pygame.display.set_mode((800, 600))
+    window = pygame.display.set_mode((1280, 720))
     x = 300
     y = 150
     tablero = Board(10, 'perro')
