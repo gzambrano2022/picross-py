@@ -1,6 +1,5 @@
 import pygame
-from menu import *
+from GUI import *
 
-run()
-
-pygame.quit()
+juego = Game()
+juego.run()
