@@ -6,7 +6,7 @@ class SettingsManager(Enum):
     CELL_SIZE = 30
     DEFAULT_COLOR = (255, 255, 255)
     CLICKED_COLOR = (0, 0, 0)
-    BACKGROUND_COLOR = (0, 0, 0)
+    BACKGROUND_COLOR = 'brown'
 
 class Cell:
     def __init__(self):
@@ -29,8 +29,7 @@ class Board:
         for row, rowOfCells in enumerate(self.board):
             for col, cell in enumerate(rowOfCells):
                 color = cell.get_color()
-                pygame.draw.rect(surface, color, (
-                col * self.cell_size + 1, row * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
+                pygame.draw.rect(surface, color, (col * self.cell_size + 1, row * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
 
     def handle_click(self, pos):
         row = pos[1] // self.cell_size
@@ -38,13 +37,14 @@ class Board:
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             self.board[row][col].click()
 
+
 class Game:
     def __init__(self, grid_size=SettingsManager.GRID_SIZE.value, cell_size=SettingsManager.CELL_SIZE.value):
         pygame.init()
-        self.window_size = grid_size * cell_size
-        self.window = pygame.display.set_mode((self.window_size, self.window_size))
+        # self.window_size = grid_size * cell_size
+        self.window = pygame.display.set_mode((800, 600))
         self.clock = pygame.time.Clock()
-        self.board = Board(grid_size, cell_size, "hola")
+        self.board = Board(cell_size, grid_size, "hola")
         self.running = True
 
     def handle_events(self):
