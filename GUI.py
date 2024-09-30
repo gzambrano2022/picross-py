@@ -4,6 +4,8 @@ from enum import Enum
 class SettingsManager(Enum):
     GRID_SIZE = 10
     CELL_SIZE = 30
+    WIDTH = 800
+    HEIGHT = 600
     DEFAULT_COLOR = (255, 255, 255)
     CLICKED_COLOR = (0, 0, 0)
     BACKGROUND_COLOR = 'brown'
@@ -30,10 +32,12 @@ class Board:
             for col, cell in enumerate(rowOfCells):
                 color = cell.get_color()
                 pygame.draw.rect(surface, color, (col * self.cell_size + 1, row * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
-
-    def handle_click(self, pos):
+                
+    def handle_click(self, pos): # pos son coordenadas (x,y) en pygame
         row = pos[1] // self.cell_size
+        print(f"pos[1] // self.cell_size = {row}")
         col = pos[0] // self.cell_size
+        print(f"pos[0] // self.cell_size = {col}")
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             self.board[row][col].click()
 
@@ -42,7 +46,7 @@ class Game:
     def __init__(self, grid_size=SettingsManager.GRID_SIZE.value, cell_size=SettingsManager.CELL_SIZE.value):
         pygame.init()
         # self.window_size = grid_size * cell_size
-        self.window = pygame.display.set_mode((800, 600))
+        self.window = pygame.display.set_mode((SettingsManager.WIDTH.value, SettingsManager.HEIGHT.value))
         self.clock = pygame.time.Clock()
         self.board = Board(cell_size, grid_size, "hola")
         self.running = True
@@ -53,6 +57,7 @@ class Game:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.board.handle_click(event.pos)
+                print(event.pos)
 
     def run(self):
         while self.running:
