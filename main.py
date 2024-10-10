@@ -1,5 +1,8 @@
-import pygame
 from GUI import *
 
-juego = Game()
-juego.run()
+pygame.init()
+
+menu = Menu()
+menu.run()  # Ejecuta el menú
+
+pygame.quit()
