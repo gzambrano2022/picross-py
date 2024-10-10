@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from GUI import LogicalBoard 
+from GUI import LogicalBoard
 
 @pytest.fixture
 def logical_board():
