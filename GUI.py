@@ -6,9 +6,9 @@ class SettingsManager(Enum):
     CELL_SIZE = 50
     WIDTH = 1280
     HEIGHT = 720
-    DEFAULT_COLOR = (255, 255, 255)
-    CLICKED_COLOR = (0, 0, 0)
-    MARKED_COLOR = (255, 0, 0)
+    DEFAULT_COLOR = (255, 255, 255) #blanco
+    CLICKED_COLOR = (0, 0, 0) #negro
+    MARKED_COLOR = (255, 0, 0) #Rojo
     BACKGROUND_COLOR = 'gray'
 
 class Cell:
@@ -84,3 +84,54 @@ class Game:
             self.board.draw(self.window)
             pygame.display.flip()
         pygame.quit()
+
+
+class Menu:
+    def __init__(self):
+        self.window = pygame.display.set_mode((SettingsManager.WIDTH.value, SettingsManager.HEIGHT.value))
+
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.font = pygame.font.SysFont('Corbel', 35)
+        self.play_button = self.font.render('Play', True, (255, 255, 255))
+        self.exit_button = self.font.render('Exit', True, (255, 255, 255))
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.is_over_button(mouse_pos, 200, 300):
+                        return 'play'  # Este será el indicador para el botón de "Play"
+                    elif self.is_over_button(mouse_pos, 200, 400):
+                        self.running = False
+                        return 'exit'
+
+    def is_over_button(self, pos, x, y, w=140, h=40):
+        return x <= pos[0] <= x + w and y <= pos[1] <= y + h
+
+    def draw(self):
+        self.window.fill(SettingsManager.BACKGROUND_COLOR.value)  # Rellenar el fondo
+        # Dibuja los botones
+        pygame.draw.rect(self.window, (100, 100, 100), [200, 300, 140, 40])  # Botón Play
+        pygame.draw.rect(self.window, (100, 100, 100), [200, 400, 140, 40])  # Botón Exit
+
+        # Coloca el texto sobre los botones
+        self.window.blit(self.play_button, (220, 305))
+        self.window.blit(self.exit_button, (220, 405))
+
+        # Actualiza la pantalla
+        pygame.display.flip()
+
+    def run(self):
+        while self.running:
+            self.clock.tick(120)
+            result = self.handle_events()  # Maneja los eventos
+            self.draw()  # Dibuja el menú
+            if result == 'play':
+                return 'play'  # Este sería el resultado para indicar "Play"
+            elif result == 'exit':
+                return 'exit'  # Este sería el resultado para indicar "Exit"
+
