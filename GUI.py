@@ -234,4 +234,6 @@ class Levels:
             result = self.handle_events()
             if result in [5, 10, 15]:
                 return result  # Retorna el nivel seleccionado
+            if result == 2:
+                return 2
             self.draw()
