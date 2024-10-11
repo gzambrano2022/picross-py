@@ -1,6 +1,8 @@
 import pygame
 from enum import Enum
 
+from Components import Button
+
 
 class SettingsManager(Enum):
     GRID_SIZE = 10
@@ -117,8 +119,10 @@ class Menu:
         self.window_manager = window_manager
         self.running = True
         self.font = pygame.font.SysFont('Corbel', 35)
-        self.play_button = self.font.render('Play', True, (255, 255, 255))
-        self.exit_button = self.font.render('Exit', True, (255, 255, 255))
+
+        # Crear botones usando la clase Button
+        self.play_button = Button(200, 300, 'Play', self.font)
+        self.exit_button = Button(200, 400, 'Exit', self.font)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -127,26 +131,19 @@ class Menu:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
-                    if self.is_over_button(mouse_pos, 200, 300):
-                        return 'play'  # Elige iniciar el juego
-                    elif self.is_over_button(mouse_pos, 200, 400):
+                    if self.play_button.is_over(mouse_pos):
+                        return 'play'  # Iniciar juego
+                    elif self.exit_button.is_over(mouse_pos):
                         self.running = False
                         return 'exit'
-
-    def is_over_button(self, pos, x, y, w=140, h=40):
-        return x <= pos[0] <= x + w and y <= pos[1] <= y + h
 
     def draw(self):
         self.window_manager.fill()
         window = self.window_manager.get_window()
 
         # Dibuja los botones
-        pygame.draw.rect(window, (100, 100, 100), [200, 300, 140, 40])
-        pygame.draw.rect(window, (100, 100, 100), [200, 400, 140, 40])
-
-        # Coloca el texto sobre los botones
-        window.blit(self.play_button, (220, 305))
-        window.blit(self.exit_button, (220, 405))
+        self.play_button.draw(window)
+        self.exit_button.draw(window)
 
         # Actualiza la ventana
         self.window_manager.update()
@@ -155,9 +152,55 @@ class Menu:
         while self.running:
             result = self.handle_events()
             if result == 'play':
-                game = Game(self.window_manager)  # Transición dentro de la clase
-                game.run()  # Esto transfiere el control al juego, pero la clase `Menu` queda encargada de hacer esto.
-                # return 'play'  # Transición al juego
+                menu_niveles = Levels(self.window_manager)  # Mostrar menú de niveles
+                selected_level = menu_niveles.run()  # Ejecuta el menú y retorna el nivel seleccionado
+                print(f"Nivel seleccionado: {selected_level}x{selected_level}")
+                # Aquí podrías iniciar el juego con el nivel seleccionado
+                game = Game(self.window_manager, selected_level)  # Transición a la sección de juego con el nivel seleccionado
+                game.run()  # Ejecuta el juego
             elif result == 'exit':
                 return 'exit'
+            self.draw()
+class Levels:
+    def __init__(self, window_manager):
+        self.window_manager = window_manager
+        self.running = True
+        self.font = pygame.font.SysFont('Corbel', 35)
+
+        # Crear botones para los niveles
+        self.button_5x5 = Button(200, 200, '5x5', self.font)
+        self.button_10x10 = Button(200, 300, '10x10', self.font)
+        self.button_15x15 = Button(200, 400, '15x15', self.font)
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.button_5x5.is_over(mouse_pos):
+                        return 5  # Nivel 5x5
+                    elif self.button_10x10.is_over(mouse_pos):
+                        return 10  # Nivel 10x10
+                    elif self.button_15x15.is_over(mouse_pos):
+                        return 15  # Nivel 15x15
+
+    def draw(self):
+        self.window_manager.fill()
+        window = self.window_manager.get_window()
+
+        # Dibuja los botones de nivel
+        self.button_5x5.draw(window)
+        self.button_10x10.draw(window)
+        self.button_15x15.draw(window)
+
+        # Actualiza la ventana
+        self.window_manager.update()
+
+    def run(self):
+        while self.running:
+            result = self.handle_events()
+            if result in [5, 10, 15]:
+                return result  # Retorna el nivel seleccionado
             self.draw()
