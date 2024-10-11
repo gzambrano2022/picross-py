@@ -15,12 +15,13 @@ class SettingsManager(Enum):
     BACKGROUND_COLOR = 'gray'
 
 
-class WindowManager:
+class Frame:
     def __init__(self, width, height, background_color):
         # Inicializa pygame y crea la ventana
         pygame.init()
         self.window = pygame.display.set_mode((width, height))
         self.background_color = background_color
+        self.current_window = None  # Para guardar la ventana actual
 
     def fill(self):
         # Llena la ventana con el color de fondo
@@ -88,11 +89,12 @@ class Board:
 class Game:
     def __init__(self, window_manager, grid_size=SettingsManager.GRID_SIZE.value,
                  cell_size=SettingsManager.CELL_SIZE.value):
-        pygame.init()
         self.window = window_manager
         self.clock = pygame.time.Clock()
         self.board = Board(cell_size, grid_size, "hola")
         self.running = True
+        self.font = pygame.font.SysFont('Corbel', 35)
+        self.backButton = Button(50, 600, 'Back', self.font)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -100,18 +102,28 @@ class Game:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.backButton.is_over(mouse_pos):
+                        return 0  # Regresa al menú de niveles
                     self.board.handle_click(event.pos, 1)
                 elif event.button == 3:
                     self.board.handle_click(event.pos, 2)
 
+    def draw(self):
+        self.window.fill()
+        self.board.draw(self.window.get_window())
+        self.backButton.draw(self.window.get_window())
+        self.window.update()
+
     def run(self):
         while self.running:
             self.clock.tick(120)
-            self.handle_events()
-            self.window.fill()
-            self.board.draw(self.window.get_window())
-            self.window.update()
+            result = self.handle_events()
+            if result == 0:
+                  return 0# Señal para regresar al menú de niveles
+            self.draw()
         pygame.quit()
+
 
 
 class Menu:
@@ -152,15 +164,30 @@ class Menu:
         while self.running:
             result = self.handle_events()
             if result == 'play':
-                menu_niveles = Levels(self.window_manager)  # Mostrar menú de niveles
-                selected_level = menu_niveles.run()  # Ejecuta el menú y retorna el nivel seleccionado
-                print(f"Nivel seleccionado: {selected_level}x{selected_level}")
-                # Aquí podrías iniciar el juego con el nivel seleccionado
-                game = Game(self.window_manager, selected_level)  # Transición a la sección de juego con el nivel seleccionado
-                game.run()  # Ejecuta el juego
+                while True:
+                    # Mostrar menú de niveles
+                    menu_niveles = Levels(self.window_manager)
+                    selected_level = menu_niveles.run()  # Ejecuta el menú de niveles y retorna el nivel seleccionado
+
+                    if selected_level in [5, 10, 15]:  # Si un nivel válido fue seleccionado
+                        print(f"Nivel seleccionado: {selected_level}x{selected_level}")
+
+                        # Iniciar el juego con el nivel seleccionado
+                        game = Game(self.window_manager, selected_level)
+                        game_result = game.run()  # Ejecuta el juego y captura el retorno
+
+                        if game_result == 0:  # Si el juego devuelve 0, volver al menú de niveles
+                            continue  # Reinicia el ciclo para mostrar nuevamente el menú de niveles
+                        else:
+                            break  # Si el juego termina de otra manera, salimos del ciclo
+                    if selected_level == 2:
+                        break
+
             elif result == 'exit':
                 return 'exit'
             self.draw()
+
+
 class Levels:
     def __init__(self, window_manager):
         self.window_manager = window_manager
@@ -171,6 +198,7 @@ class Levels:
         self.button_5x5 = Button(200, 200, '5x5', self.font)
         self.button_10x10 = Button(200, 300, '10x10', self.font)
         self.button_15x15 = Button(200, 400, '15x15', self.font)
+        self.backButton = Button(50, 600, 'Back', self.font)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -179,6 +207,8 @@ class Levels:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
+                    if self.backButton.is_over(mouse_pos):
+                        return 2  # Regresa al menú de niveles
                     if self.button_5x5.is_over(mouse_pos):
                         return 5  # Nivel 5x5
                     elif self.button_10x10.is_over(mouse_pos):
@@ -194,6 +224,7 @@ class Levels:
         self.button_5x5.draw(window)
         self.button_10x10.draw(window)
         self.button_15x15.draw(window)
+        self.backButton.draw(window)
 
         # Actualiza la ventana
         self.window_manager.update()
