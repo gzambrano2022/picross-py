@@ -14,22 +14,18 @@ class SettingsManager(Enum):
     MARKED_COLOR = (255, 0, 0)  # Rojo
     BACKGROUND_COLOR = 'gray'
 
-class Frame:
+class FrameManager:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((SettingsManager.WIDTH.value, SettingsManager.HEIGHT.value))
-        self.current_window = None
+        self.current_scene = None
 
     def switch_to(self, new_window):
-        self.current_window = new_window
+        self.current_scene = new_window
 
     def run(self):
-        while self.current_window is not None:
-            self.current_window.run()
-
-
-
-
+        while self.current_scene is not None:
+            self.current_scene.run()
 
 class Cell:
     def __init__(self):
@@ -83,8 +79,8 @@ class Board:
 
 
 class Menu:
-    def __init__(self, window_manager):
-        self.window_manager = window_manager
+    def __init__(self, frame_manager):
+        self.frame_manager = frame_manager
         self.running = True
         self.font = pygame.font.SysFont('Corbel', 35)
 
@@ -96,23 +92,23 @@ class Menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                self.window_manager.current_window = None
+                self.frame_manager.current_scene = None
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
                     if self.play_button.is_over(mouse_pos):
-                        self.window_manager.switch_to(Levels(self.window_manager))  # Cambia a ventana Selector de niveles
+                        self.frame_manager.switch_to(Levels(self.frame_manager))  # Cambia a ventana Selector de niveles
                         self.running = False  # Detenemos la ventana
                     elif self.exit_button.is_over(mouse_pos):
                         self.running = False
-                        self.window_manager.current_window = None  # Para cerrar el programa
+                        self.frame_manager.current_scene = None  # Para cerrar el programa
 
     def draw(self):
-        self.window_manager.screen.fill((60, 60, 60))
+        self.frame_manager.screen.fill((60, 60, 60))
 
         # Dibuja los botones
-        self.play_button.draw(self.window_manager.screen)
-        self.exit_button.draw(self.window_manager.screen)
+        self.play_button.draw(self.frame_manager.screen)
+        self.exit_button.draw(self.frame_manager.screen)
         pygame.display.flip()
         # Actualiza la ventana
         # self.window_manager.update()
@@ -124,8 +120,8 @@ class Menu:
 
 
 class Levels:
-    def __init__(self, window_manager):
-        self.window_manager = window_manager
+    def __init__(self, frame_manager):
+        self.frame_manager = frame_manager
         self.running = True
         self.font = pygame.font.SysFont('Corbel', 35)
 
@@ -139,47 +135,43 @@ class Levels:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                self.window_manager.current_window = None
+                self.frame_manager.current_scene = None
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
                     if self.backButton.is_over(mouse_pos):
-                        self.window_manager.switch_to(Menu(self.window_manager))  # Cambia a ventana Menu
+                        self.frame_manager.switch_to(Menu(self.frame_manager))  # Cambia a ventana Menu
                         self.running = False  # Detenemos la ventana
                     elif self.button_5x5.is_over(mouse_pos):
-                        self.window_manager.switch_to(Game(self.window_manager, grid_size=5))  # 5x5 grid
+                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=5))  # 5x5 grid
                         self.running = False
                     elif self.button_10x10.is_over(mouse_pos):
-                        self.window_manager.switch_to(Game(self.window_manager, grid_size=10))  # 10x10 grid
+                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=10))  # 10x10 grid
                         self.running = False
                     elif self.button_15x15.is_over(mouse_pos):
-                        self.window_manager.switch_to(Game(self.window_manager, grid_size=15))  # 15x15 grid
+                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=15))  # 15x15 grid
                         self.running = False
 
     def draw(self):
-        self.window_manager.screen.fill((30, 30, 60))  # Fondo azul oscuro
-
+        self.frame_manager.screen.fill((30, 30, 60))  # Fondo azul oscuro
         # Dibuja los botones de nivel
-        self.button_5x5.draw(self.window_manager.screen)
-        self.button_10x10.draw(self.window_manager.screen)
-        self.button_15x15.draw(self.window_manager.screen)
-        self.backButton.draw(self.window_manager.screen)
-
+        self.button_5x5.draw(self.frame_manager.screen)
+        self.button_10x10.draw(self.frame_manager.screen)
+        self.button_15x15.draw(self.frame_manager.screen)
+        self.backButton.draw(self.frame_manager.screen)
         # Actualiza la ventana
         pygame.display.flip()
-
 
     def run(self):
         while self.running:
             self.handle_events()
             self.draw()
 
-
 class Game:
-    def __init__(self, window_manager, grid_size=SettingsManager.GRID_SIZE.value,
+    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value,
                  cell_size=SettingsManager.CELL_SIZE.value):
-        self.window_manager = window_manager  # Cambiado para consistencia
+        self.frame_manager = frame_manager  # Cambiado para consistencia
         self.clock = pygame.time.Clock()
         self.board = Board(cell_size, grid_size, "hola")  # Usa el tamaño del grid recibido
         self.running = True
@@ -190,13 +182,13 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-                self.window_manager.current_window = None
+                self.frame_manager.current_scene = None
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
                     if self.backButton.is_over(mouse_pos):
-                        self.window_manager.switch_to(
-                            Levels(self.window_manager))  # Cambia a ventana al menu de niveles
+                        self.frame_manager.switch_to(
+                            Levels(self.frame_manager))  # Cambia a ventana al menu de niveles
                         self.running = False
                     else:
                         # Aquí manejamos el clic izquierdo en el tablero
@@ -205,9 +197,9 @@ class Game:
                     self.board.handle_click(event.pos, 2)
 
     def draw(self):
-        self.window_manager.screen.fill((30, 30, 60))  # Fondo azul oscuro
-        self.board.draw(self.window_manager.screen)
-        self.backButton.draw(self.window_manager.screen)
+        self.frame_manager.screen.fill((30, 30, 60))  # Fondo azul oscuro
+        self.board.draw(self.frame_manager.screen)
+        self.backButton.draw(self.frame_manager.screen)
         pygame.display.flip()
 
     def run(self):

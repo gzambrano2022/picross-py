@@ -3,7 +3,7 @@ from GUI import *
 pygame.init()
 
 # Inicia pygame y Frame
-manager = Frame()
+manager = FrameManager()
 menu = Menu(manager)
 # Muestra el menú
 manager.switch_to(menu)
