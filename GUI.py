@@ -137,7 +137,6 @@ class Menu(Scene):
 
     def draw(self):
         self.frame_manager.screen.fill((60, 60, 60))
-
         # Dibuja los botones
         self.play_button.draw(self.frame_manager.screen)
         self.exit_button.draw(self.frame_manager.screen)
