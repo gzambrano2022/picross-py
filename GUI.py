@@ -1,7 +1,7 @@
 import pygame
 from abc import ABC, abstractmethod
 from enum import Enum
-
+import pickle
 from Components import Button
 
 
@@ -206,3 +206,5 @@ class Board:
             col = (pos[0] - self.offset_x) // self.cell_size
             if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
                 self.board[row][col].mark()
+
+    
