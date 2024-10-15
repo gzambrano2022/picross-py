@@ -1,7 +1,8 @@
 import pygame
 from abc import ABC, abstractmethod
 from enum import Enum
-
+import numpy as np
+import random
 from Components import Button
 
 
@@ -43,7 +44,11 @@ class Game(Scene):
                  cell_size=SettingsManager.CELL_SIZE.value):
         super().__init__(frame_manager)
         self.clock = pygame.time.Clock()
-        self.board = Board(cell_size, grid_size, "hola")  # Usa el tamaño del grid recibido
+
+        logical_board = LogicalBoard(grid_size)
+        logical_board.fill_board()
+
+        self.board = Board(cell_size, grid_size, "hola", logical_board)  # Usa el tamaño del grid recibido
         self.backButton = Button(50, 600, 'Back', self.font)
 
     def handle_events(self):
@@ -69,6 +74,63 @@ class Game(Scene):
         self.board.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
         pygame.display.flip()
+
+class LogicalBoard:
+    def __init__(self, grid_size):
+        self.grid_size = grid_size
+        self.board_l = np.zeros((grid_size, grid_size))
+
+    def fill_board(self):
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                num = random.randint(0,1)
+                self.board_l[i][j] = num
+
+    def find_numbers_r(self):
+        rarray = []
+
+        # contabilizar cuántos '1's hay en cada fila
+        for i in range(self.grid_size):
+            cont  = 0
+            array = []
+            for j in range(self.grid_size):
+                if self.board_l[i][j] == 1:
+                    cont += 1
+                else:
+                    if cont>0:
+                        array.append(cont)
+                        cont = 0
+                if j == self.grid_size-1 and cont>0:
+                    array.append(cont)
+            if len(array)==0:
+                array.append(0)
+
+            rarray.append(array)
+
+        return rarray
+
+    def find_numbers_c(self):
+        carray = []
+
+        # contabilizar cuántos '1's hay en cada columna
+        for i in range(self.grid_size):
+            cont = 0
+            array = []
+            for j in range(self.grid_size):
+                if self.board_l[j][i] == 1:
+                    cont += 1
+                else:
+                    if cont > 0:
+                        array.append(cont)
+                        cont = 0
+                if j == self.grid_size - 1 and cont > 0:
+                    array.append(cont)
+            if len(array)==0:
+                array.append(0)
+
+            carray.append(array)
+
+        return carray
 
 # Seleccion de niveles
 class Levels(Scene):
@@ -176,15 +238,20 @@ class Cell:
         else:
             return SettingsManager.DEFAULT_COLOR.value
 
-
 class Board:
-    def __init__(self, cell_size, grid_size, figure):
+    def __init__(self, cell_size, grid_size, figure, logicalboard):
         self.cell_size = cell_size
         self.grid_size = grid_size
         self.figure = figure
+        self.logical_board = logicalboard
         self.board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
         self.offset_x = (SettingsManager.WIDTH.value - self.grid_size * self.cell_size) // 2
         self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2
+
+        self.rarray = self.logical_board.find_numbers_r()
+        self.carray = self.logical_board.find_numbers_c()
+
+        self.font = pygame.font.SysFont(None, 36)
 
     def draw(self, surface):
         for row, rowOfCells in enumerate(self.board):
@@ -194,6 +261,23 @@ class Board:
                     self.offset_x + col * self.cell_size,  # Coordenada x ajustada
                     self.offset_y + row * self.cell_size,  # Coordenada y ajustada
                     self.cell_size - 2, self.cell_size - 2))  # Tamaño de la celda con un borde pequeño
+
+        for i,numbers in enumerate(self.rarray):
+            text = "  ".join(map(str, numbers))
+            row_number_surface = self.font.render(text, True, (255,0,255))
+            surface.blit(row_number_surface, (
+                self.offset_x + i - 80,
+                self.offset_y + i * self.cell_size + self.cell_size // 2 - 10,
+            ))
+
+        for i,numbers in enumerate(self.carray):
+            for j, number in enumerate(numbers):
+                text = str(number)
+                col_number_surface = self.font.render(text, True, (255,0,255))
+                surface.blit(col_number_surface, (
+                    self.offset_x + i * self.cell_size + self.cell_size // 2 - 10,
+                    self.offset_y - 30 - (len(numbers) - j) * (self.font.get_height() + 5)
+                ))
 
     def handle_click(self, pos, num_click):  # pos son coordenadas (x,y) en pygame. num_click: 1 right, 2 left
         if num_click == 1:
