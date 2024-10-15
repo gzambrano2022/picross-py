@@ -1,3 +1,5 @@
+import os
+
 import pygame
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -45,6 +47,7 @@ class Game(Scene):
         self.clock = pygame.time.Clock()
         self.board = Board(cell_size, grid_size, "hola")  # Usa el tamaño del grid recibido
         self.backButton = Button(50, 600, 'Back', self.font)
+        self.saveButton = Button(200, 600, 'Save', self.font)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -58,6 +61,12 @@ class Game(Scene):
                         self.frame_manager.switch_to(
                             Levels(self.frame_manager))  # Cambia a ventana al menu de niveles
                         self.running = False
+                    elif self.saveButton.is_over(mouse_pos):
+                        filename = f'saved_board_{self.board.grid_size}.pkl'
+                        if self.board.guardar(filename):
+                            print("Tablero guardado correctamente.")
+                        else:
+                            print("Error al guardar el tablero.")
                     else:
                         # Aquí manejamos el clic izquierdo en el tablero
                         self.board.handle_click(event.pos, 1)  # Pasamos el clic izquierdo (1) a board
@@ -68,6 +77,7 @@ class Game(Scene):
         self.frame_manager.screen.fill((30, 30, 60))  # Fondo azul oscuro
         self.board.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
+        self.saveButton.draw(self.frame_manager.screen)
         pygame.display.flip()
 
 # Seleccion de niveles
@@ -208,9 +218,21 @@ class Board:
                 self.board[row][col].mark()
 
     def guardar(self, filename):
+        # Obtener el directorio del proyecto
+        proyecto_directory = os.path.dirname(os.path.abspath(__file__))
+        saved_files_directory = os.path.join(proyecto_directory, 'saved_files')
+
+        # Crear el subdirectorio si no existe
+        if not os.path.exists(saved_files_directory):
+            os.makedirs(saved_files_directory)
+
+        # Combina la ruta del subdirectorio con el nombre del archivo
+        full_path = os.path.join(saved_files_directory, filename)
+
         try:
-            with open(filename, 'wb') as file:
-                pickle.dump(self.board, file)
+            print("Guardando archivo en:", full_path)
+            with open(full_path, 'wb') as file: # Abre en modo binario para guardar con pickle
+                pickle.dump(self.board, file) # Guarda el tablero en el archivo
             return True
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
