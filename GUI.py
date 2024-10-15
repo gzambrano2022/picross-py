@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 import pygame
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -244,4 +243,3 @@ class Board:
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
             return False
-
