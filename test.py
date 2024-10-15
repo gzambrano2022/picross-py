@@ -17,3 +17,7 @@ def test_guardar(grid_size):
 
     # Limpieza después de la prueba
     os.remove(filename)
+
+
+
+

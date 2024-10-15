@@ -207,4 +207,12 @@ class Board:
             if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
                 self.board[row][col].mark()
 
-    
+    def guardar(self, filename):
+        try:
+            with open(filename, 'wb') as file:
+                pickle.dump(self.board, file)
+            return True
+        except Exception as e:
+            print(f"Error al guardar el tablero: {e}")
+            return False
+
