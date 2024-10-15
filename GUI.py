@@ -1,5 +1,5 @@
 import os
-
+from datetime import datetime
 import pygame
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -62,7 +62,7 @@ class Game(Scene):
                             Levels(self.frame_manager))  # Cambia a ventana al menu de niveles
                         self.running = False
                     elif self.saveButton.is_over(mouse_pos):
-                        filename = f'saved_board_{self.board.grid_size}.pkl'
+                        filename = 'saved_board'
                         if self.board.guardar(filename):
                             print("Tablero guardado correctamente.")
                         else:
@@ -188,6 +188,7 @@ class Cell:
 
 
 class Board:
+    save_cont = {} # Diccionario para llevar la cuenta de los archivos guardados.
     def __init__(self, cell_size, grid_size, figure):
         self.cell_size = cell_size
         self.grid_size = grid_size
@@ -226,8 +227,14 @@ class Board:
         if not os.path.exists(saved_files_directory):
             os.makedirs(saved_files_directory)
 
-        # Combina la ruta del subdirectorio con el nombre del archivo
-        full_path = os.path.join(saved_files_directory, filename)
+        # Agregar timestamp al nombre del archivo
+        if self.grid_size not in Board.save_cont:
+            Board.save_cont[self.grid_size] = 1
+        else:
+            Board.save_cont[self.grid_size] += 1
+
+        full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl" # Ejemplo: saved_board_5x5_1.pkl
+        full_path = os.path.join(saved_files_directory, full_name) # Combinar ruta del subdirectorio con nombre archivo
 
         try:
             print("Guardando archivo en:", full_path)
