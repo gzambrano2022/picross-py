@@ -56,8 +56,8 @@ class Game(Scene):
         logical_board.fill_board()
 
         self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
-        self.backButton = Button(50, 600, 'Back', self.font)
-        self.saveButton = Button(200, 600, 'Save', self.font)
+        self.backButton = Button(1000, 600, 'Back', self.font)
+        self.saveButton = Button(1000, 500, 'Save', self.font)
 
     def handle_events(self):
         for event in pygame.event.get():

@@ -1,13 +1,32 @@
 import os
-import pytest
-from GUI import Board
 
+import pygame
+import pytest
+from unittest.mock import MagicMock
+from GUI import Board, Cell
+
+# Configuración inicial para los tests
+@pytest.fixture(scope="module", autouse=True)
+def setup_pygame():
+    # Inicializamos Pygame antes de los tests
+    pygame.init()
+    yield
+    # Cerramos Pygame después de los tests
+    pygame.quit()
 
 @pytest.mark.parametrize("grid_size", [5, 10, 15])
 def test_guardar(grid_size):
     os.makedirs('saved_files', exist_ok=True)
 
-    board = Board(cell_size=50, grid_size=grid_size, figure="test")
+    mock_logicalboard = MagicMock()
+
+    board = Board(
+        grid_size=grid_size,
+        frame_width=500,
+        frame_height=500,
+        logicalboard=mock_logicalboard
+    )
+
 
     board.board[0][0].click()
     filename = 'saved_board'
@@ -24,13 +43,13 @@ def test_guardar(grid_size):
 def test_cargar(grid_size):
     os.makedirs('saved_files', exist_ok=True)
 
-    board = Board(cell_size=50, grid_size=grid_size, figure="test")
+    board = Board(cell_size=50, grid_size=grid_size)
 
     board.board[0][0].click()
     filename = f'saved_board_{grid_size}x{grid_size}_1.pkl'
     board.guardar('saved_board')
 
-    new_board = Board(cell_size=50, grid_size=grid_size, figure="test")
+    new_board = Board(cell_size=50, grid_size=grid_size)
     assert new_board.cargar(filename) == True
 
     assert new_board.board[0][0].is_clicked()
