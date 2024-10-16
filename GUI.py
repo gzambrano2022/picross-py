@@ -3,14 +3,15 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import numpy as np
 import random
+from pygame.examples.moveit import WIDTH, HEIGHT
 from Components import Button
 
 
 class SettingsManager(Enum):
     GRID_SIZE = 10
-    CELL_SIZE = 50
+    CELL_SIZE = 20
     WIDTH = 1280
-    HEIGHT = 720
+    HEIGHT = 750
     DEFAULT_COLOR = (255, 255, 255)  # blanco
     CLICKED_COLOR = (0, 0, 0)  # negro
     MARKED_COLOR = (255, 0, 0)  # Rojo
@@ -40,15 +41,19 @@ class Scene(ABC):
 
 # Instancia de ejecucion del tablero del nonograma
 class Game(Scene):
-    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value,
-                 cell_size=SettingsManager.CELL_SIZE.value):
+    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value):
         super().__init__(frame_manager)
         self.clock = pygame.time.Clock()
+
+        cell_size = min(
+            SettingsManager.WIDTH.value // grid_size,
+            SettingsManager.HEIGHT.value // grid_size
+        )
 
         logical_board = LogicalBoard(grid_size)
         logical_board.fill_board()
 
-        self.board = Board(cell_size, grid_size, "hola", logical_board)  # Usa el tamaño del grid recibido
+        self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
         self.backButton = Button(50, 600, 'Back', self.font)
 
     def handle_events(self):
@@ -239,14 +244,13 @@ class Cell:
             return SettingsManager.DEFAULT_COLOR.value
 
 class Board:
-    def __init__(self, cell_size, grid_size, figure, logicalboard):
-        self.cell_size = cell_size
+    def __init__(self, grid_size, frame_width, frame_height, logicalboard):
+        self.cell_size = min(frame_width // grid_size, frame_height // grid_size)
         self.grid_size = grid_size
-        self.figure = figure
         self.logical_board = logicalboard
         self.board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
         self.offset_x = (SettingsManager.WIDTH.value - self.grid_size * self.cell_size) // 2
-        self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2
+        self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2 + 75
 
         self.rarray = self.logical_board.find_numbers_r()
         self.carray = self.logical_board.find_numbers_c()
@@ -266,7 +270,7 @@ class Board:
             text = "  ".join(map(str, numbers))
             row_number_surface = self.font.render(text, True, (255,0,255))
             surface.blit(row_number_surface, (
-                self.offset_x + i - 80,
+                self.offset_x + i - 180,
                 self.offset_y + i * self.cell_size + self.cell_size // 2 - 10,
             ))
 
