@@ -5,9 +5,8 @@ import pytest
 from unittest.mock import MagicMock
 from GUI import Board, Cell
 
-# Configuración inicial para los tests
 @pytest.fixture(scope="module", autouse=True)
-def setup_pygame():
+def setuppygame():
     # Inicializamos Pygame antes de los tests
     pygame.init()
     yield
@@ -46,7 +45,7 @@ def test_cargar(grid_size):
     board = Board(cell_size=50, grid_size=grid_size)
 
     board.board[0][0].click()
-    filename = f'saved_board_{grid_size}x{grid_size}_1.pkl'
+    filename = f'saved_board{grid_size}x{grid_size}_1.pkl'
     board.guardar('saved_board')
 
     new_board = Board(cell_size=50, grid_size=grid_size)

@@ -17,6 +17,7 @@ class SettingsManager(Enum):
     DEFAULT_COLOR = (255, 255, 255)  # blanco
     CLICKED_COLOR = (0, 0, 0)  # negro
     MARKED_COLOR = (255, 0, 0)  # Rojo
+    NUMBERS_COLOR = (250, 250, 114) # Amarillo claro
     BACKGROUND_COLOR = 'gray'
 
 class Scene(ABC):
@@ -57,7 +58,7 @@ class Game(Scene):
 
         self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
         self.backButton = Button(50, 600, 'Back', self.font)
-        self.saveButton = Button(200, 600, 'Save', self.font)
+        self.saveButton = Button(50, 550, 'Save', self.font)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -280,7 +281,7 @@ class Board:
 
         for i,numbers in enumerate(self.rarray):
             text = "  ".join(map(str, numbers))
-            row_number_surface = self.font.render(text, True, (255,0,255))
+            row_number_surface = self.font.render(text, True, SettingsManager.NUMBERS_COLOR.value)
             surface.blit(row_number_surface, (
                 self.offset_x + i - 180,
                 self.offset_y + i * self.cell_size + self.cell_size // 2 - 10,
@@ -289,7 +290,7 @@ class Board:
         for i,numbers in enumerate(self.carray):
             for j, number in enumerate(numbers):
                 text = str(number)
-                col_number_surface = self.font.render(text, True, (255,0,255))
+                col_number_surface = self.font.render(text, True, SettingsManager.NUMBERS_COLOR.value)
                 surface.blit(col_number_surface, (
                     self.offset_x + i * self.cell_size + self.cell_size // 2 - 10,
                     self.offset_y - 30 - (len(numbers) - j) * (self.font.get_height() + 5)
