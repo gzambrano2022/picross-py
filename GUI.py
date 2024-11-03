@@ -153,10 +153,26 @@ class Levels(Scene):
     def __init__(self, frame_manager):
         # Crear botones para los niveles
         super().__init__(frame_manager)
-        self.button_5x5 = Button(200, 200, '5x5', self.font)
-        self.button_10x10 = Button(200, 300, '10x10', self.font)
-        self.button_15x15 = Button(200, 400, '15x15', self.font)
+        self.button_5x5 = Button(185, 200, '5x5', self.font)
+        self.button_10x10 = Button(565, 200, '10x10', self.font)
+        self.button_15x15 = Button(935, 200, '15x15', self.font)
         self.backButton = Button(50, 600, 'Back', self.font)
+
+        # Crear imagenes referencia
+        pry_dir = os.path.dirname(os.path.abspath(__file__))
+        ruta_imagen1 = os.path.join(pry_dir, 'imagenes gui', 'tam1.png')
+        ruta_imagen2 = os.path.join(pry_dir, 'imagenes gui', 'tam2.png')
+        ruta_imagen3 = os.path.join(pry_dir, 'imagenes gui', 'tam3.png')
+        self.imagen1 = pygame.image.load(ruta_imagen1)
+        self.imagen2 = pygame.image.load(ruta_imagen2)
+        self.imagen3 = pygame.image.load(ruta_imagen3)
+        self.imagen1 = pygame.transform.scale(self.imagen1, (216, 220))
+        self.imagen2 = pygame.transform.scale(self.imagen2, (216, 220))
+        self.imagen3 = pygame.transform.scale(self.imagen3, (216, 220))
+
+        # Crear el texto del título
+        self.title_font = pygame.font.SysFont('Times New Roman',80)
+        self.title = self.title_font.render('Tamaños', True, (255,255,255))
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -187,6 +203,15 @@ class Levels(Scene):
         self.button_10x10.draw(self.frame_manager.screen)
         self.button_15x15.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
+
+        # Dibuja título
+        self.frame_manager.screen.blit(self.title, (80,50))
+
+        #  Dibuja imagenes
+        self.frame_manager.screen.blit(self.imagen1, (150, 300))
+        self.frame_manager.screen.blit(self.imagen2, (530, 300))
+        self.frame_manager.screen.blit(self.imagen3, (900, 300))
+
         # Actualiza la ventana
         pygame.display.flip()
 
