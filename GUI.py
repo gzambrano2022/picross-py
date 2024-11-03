@@ -85,7 +85,7 @@ class Game(Scene):
                     self.board.handle_click(event.pos, 2)
 
     def draw(self):
-        self.frame_manager.screen.fill((30, 30, 60))  # Fondo azul oscuro
+        self.frame_manager.screen.fill((60,33,89))  # Fondo morado oscuro
         self.board.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
         self.saveButton.draw(self.frame_manager.screen)
@@ -181,7 +181,7 @@ class Levels(Scene):
                         self.running = False
 
     def draw(self):
-        self.frame_manager.screen.fill((30, 30, 60))  # Fondo azul oscuro
+        self.frame_manager.screen.fill((60,33,89))  # Fondo morado oscuro
         # Dibuja los botones de nivel
         self.button_5x5.draw(self.frame_manager.screen)
         self.button_10x10.draw(self.frame_manager.screen)
@@ -214,7 +214,7 @@ class Menu(Scene):
                         self.frame_manager.current_scene = None  # Para cerrar el programa
 
     def draw(self):
-        self.frame_manager.screen.fill((60, 60, 60))
+        self.frame_manager.screen.fill((60,33,89)) # Fondo morado oscuro
         # Dibuja los botones
         self.play_button.draw(self.frame_manager.screen)
         self.exit_button.draw(self.frame_manager.screen)
@@ -271,6 +271,9 @@ class Board:
         self.font = pygame.font.SysFont(None, 36)
 
     def draw(self, surface):
+        board_width = self.grid_size * self.cell_size
+
+        # Dibujar las celdas
         for row, rowOfCells in enumerate(self.board):
             for col, cell in enumerate(rowOfCells):
                 color = cell.get_color()
@@ -278,7 +281,19 @@ class Board:
                     self.offset_x + col * self.cell_size,  # Coordenada x ajustada
                     self.offset_y + row * self.cell_size,  # Coordenada y ajustada
                     self.cell_size - 2, self.cell_size - 2))  # Tamaño de la celda con un borde pequeño
+        # Dibujar lineas de separacion (cada 5x5)
+        line_color = (0,0,0)
+        for i in range(0, self.grid_size+1,5):
+            # Línea vertical cada 5 celdas
+            pygame.draw.line(surface, line_color,
+                             (self.offset_x + i * self.cell_size, self.offset_y),
+                             (self.offset_x + i * self.cell_size, self.offset_y + board_width), 3)
+            # Línea horizontal cada 5 celdas
+            pygame.draw.line(surface, line_color,
+                             (self.offset_x, self.offset_y + i * self.cell_size),
+                             (self.offset_x + board_width, self.offset_y + i * self.cell_size), 3)
 
+        #Dibujar numeros en filas
         for i,numbers in enumerate(self.rarray):
             text = "  ".join(map(str, numbers))
             row_number_surface = self.font.render(text, True, SettingsManager.NUMBERS_COLOR.value)
@@ -287,6 +302,7 @@ class Board:
                 self.offset_y + i * self.cell_size + self.cell_size // 2 - 10,
             ))
 
+        #Dibujar numeros en columnas
         for i,numbers in enumerate(self.carray):
             for j, number in enumerate(numbers):
                 text = str(number)
