@@ -44,7 +44,7 @@ class Scene(ABC):
 
 # Instancia de ejecucion del tablero del nonograma
 class Game(Scene):
-    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value):
+    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, solution=None):
         super().__init__(frame_manager)
         self.clock = pygame.time.Clock()
 
@@ -53,8 +53,10 @@ class Game(Scene):
             SettingsManager.HEIGHT.value // grid_size
         )
 
-        logical_board = LogicalBoard(grid_size)
-        logical_board.fill_board()
+        if solution is not None:
+            logical_board = LogicalBoard(grid_size,solution)  # Crear una instancia de LogicalBoard
+        else:
+            logical_board = LogicalBoard(np.zeros((grid_size, grid_size)))  # o alguna lógica para inicializar
 
         self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
         self.backButton = Button(50, 600, 'Back', self.font)
@@ -92,15 +94,13 @@ class Game(Scene):
         pygame.display.flip()
 
 class LogicalBoard:
-    def __init__(self, grid_size):
+    def __init__(self, grid_size,solution=None):
         self.grid_size = grid_size
-        self.board_l = np.zeros((grid_size, grid_size))
 
-    def fill_board(self):
-        for i in range(self.grid_size):
-            for j in range(self.grid_size):
-                num = random.randint(0,1)
-                self.board_l[i][j] = num
+        if solution is not None:
+            self.board_l = np.array(solution)
+        else:
+            self.board_l = np.zeros((grid_size,grid_size))
 
     def find_numbers_r(self):
         rarray = []
@@ -174,6 +174,25 @@ class Levels(Scene):
         self.title_font = pygame.font.SysFont('Times New Roman',80)
         self.title = self.title_font.render('Tamaños', True, (255,255,255))
 
+    def random_solution(self,size):
+        folder_path = os.path.join('solutions',f's_{size}x{size}')
+
+        # Obtener la lista de archivos .pkl
+        solution_files = [file for file in os.listdir(folder_path) if file.endswith('.pkl')]
+
+        # Elegir archivo aleatorio de la lista
+        if solution_files:
+            random_file = random.choice(solution_files)
+            file_path = os.path.join(folder_path, random_file)
+
+            # Cargar y devolver contenido '.pkl'
+            with open(file_path, 'rb') as f:
+                solution = pickle.load(f)
+            return solution
+        else:
+            print("No se encontraron archivos .pkl en la carpeta.")
+            self.frame_manager.switch_to(Levels(self.frame_manager))
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -187,13 +206,16 @@ class Levels(Scene):
                         self.frame_manager.switch_to(Menu(self.frame_manager))  # Cambia a ventana Menu
                         self.running = False  # Detenemos la ventana
                     elif self.button_5x5.is_over(mouse_pos):
-                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=5))  # 5x5 grid
+                        solution = self.random_solution(5)
+                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=5,solution=solution))  # 5x5 grid
                         self.running = False
                     elif self.button_10x10.is_over(mouse_pos):
-                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=10))  # 10x10 grid
+                        solution = self.random_solution(10)
+                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=10,solution=solution))  # 10x10 grid
                         self.running = False
                     elif self.button_15x15.is_over(mouse_pos):
-                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=15))  # 15x15 grid
+                        solution = self.random_solution(15)
+                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=15,solution=solution))  # 15x15 grid
                         self.running = False
 
     def draw(self):
