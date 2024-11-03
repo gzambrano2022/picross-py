@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 import random
 from pygame.examples.moveit import WIDTH, HEIGHT
-from Components import Button
+from Components import Button, MainTitle
 
 
 class SettingsManager(Enum):
@@ -242,6 +242,7 @@ class Menu(Scene):
     def __init__(self, frame_manager):
         super().__init__(frame_manager)
         # Crear botones usando la clase Button
+        self.mainTitle = MainTitle(SettingsManager.WIDTH.value,SettingsManager.HEIGHT.value)
         self.play_button = Button(200, 300, 'Play', self.font)
         self.exit_button = Button(200, 400, 'Exit', self.font)
 
@@ -263,6 +264,7 @@ class Menu(Scene):
     def draw(self):
         self.frame_manager.screen.fill((60,33,89)) # Fondo morado oscuro
         # Dibuja los botones
+        self.mainTitle.draw(self.frame_manager.screen)
         self.play_button.draw(self.frame_manager.screen)
         self.exit_button.draw(self.frame_manager.screen)
         pygame.display.flip()
