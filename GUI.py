@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 import random
 from pygame.examples.moveit import WIDTH, HEIGHT
-from Components import Button, MainTitle
+from Components import Button, Title
 
 
 class SettingsManager(Enum):
@@ -24,7 +24,7 @@ class Scene(ABC):
     def __init__(self, frame_manager):
         self.frame_manager = frame_manager
         self.running = True
-        self.font = pygame.font.SysFont('Corbel', 35)
+        self.font = pygame.font.Font('fonts/monogram.ttf', 35)
 
     @abstractmethod
     def handle_events(self):
@@ -179,8 +179,8 @@ class Levels(Scene):
         self.imagen3 = pygame.transform.scale(self.imagen3, (216, 220))
 
         # Crear el texto del título
-        self.title_font = pygame.font.SysFont('Times New Roman',80)
-        self.title = self.title_font.render('Tamaños', True, (255,255,255))
+        self.SubTitle = Title(SettingsManager.WIDTH.value, SettingsManager.HEIGHT.value, "LEVELS", "fonts/ka1.ttf")
+
 
     def random_solution(self,size):
         folder_path = os.path.join('solutions',f's_{size}x{size}')
@@ -249,9 +249,10 @@ class Levels(Scene):
         self.button_10x10.draw(self.frame_manager.screen)
         self.button_15x15.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
+        self.SubTitle.draw(self.frame_manager.screen)
 
         # Dibuja título
-        self.frame_manager.screen.blit(self.title, (80,50))
+        #self.frame_manager.screen.blit(self.title, (80,50))
 
         #  Dibuja imagenes
         self.frame_manager.screen.blit(self.imagen1, (150, 300))
@@ -266,9 +267,9 @@ class Menu(Scene):
     def __init__(self, frame_manager):
         super().__init__(frame_manager)
         # Crear botones usando la clase Button
-        self.mainTitle = MainTitle(SettingsManager.WIDTH.value,SettingsManager.HEIGHT.value)
-        self.play_button = Button(200, 300, 'Play', self.font)
-        self.exit_button = Button(200, 400, 'Exit', self.font)
+        self.mainTitle = Title(SettingsManager.WIDTH.value,SettingsManager.HEIGHT.value+1000, "PYCROSS", "fonts/Cube.ttf", 50)
+        self.play_button = Button(200, 450, 'Play', self.font)
+        self.exit_button = Button(200, 550, 'Exit', self.font)
 
     def handle_events(self):
         for event in pygame.event.get():
