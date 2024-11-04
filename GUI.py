@@ -67,7 +67,15 @@ class Game(Scene):
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            if self.saveButton.is_over(pygame.mouse.get_pos()):
+                self.saveButton.color = (0, 102, 104)
+            if not(self.saveButton.is_over(pygame.mouse.get_pos())):
+                self.saveButton.color = (100,100,100)
+            if self.backButton.is_over(pygame.mouse.get_pos()):
+                self.backButton.color = (0, 102, 104)
+            if not(self.backButton.is_over(pygame.mouse.get_pos())):
+                self.backButton.color = (100,100,100)
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
                     if self.backButton.is_over(mouse_pos):
@@ -198,8 +206,24 @@ class Levels(Scene):
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
+            if self.button_5x5.is_over(pygame.mouse.get_pos()):
+                self.button_5x5.color = (0, 102, 104)
+            if not(self.button_5x5.is_over(pygame.mouse.get_pos())):
+                self.button_5x5.color = (100,100,100)
+            if self.button_10x10.is_over(pygame.mouse.get_pos()):
+                self.button_10x10.color = (0, 102, 104)
+            if not(self.button_10x10.is_over(pygame.mouse.get_pos())):
+                self.button_10x10.color = (100,100,100)
+            if self.button_15x15.is_over(pygame.mouse.get_pos()):
+                self.button_15x15.color = (0, 102, 104)
+            if not(self.button_15x15.is_over(pygame.mouse.get_pos())):
+                self.button_15x15.color = (100,100,100)
+            if self.backButton.is_over(pygame.mouse.get_pos()):
+                self.backButton.color = (0, 102, 104)
+            if not(self.backButton.is_over(pygame.mouse.get_pos())):
+                self.backButton.color = (100,100,100)
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
                     if self.backButton.is_over(mouse_pos):
@@ -251,7 +275,15 @@ class Menu(Scene):
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            if self.play_button.is_over(pygame.mouse.get_pos()):
+                self.play_button.color = (0, 102, 104)
+            if not(self.play_button.is_over(pygame.mouse.get_pos())):
+                self.play_button.color = (100,100,100)
+            if self.exit_button.is_over(pygame.mouse.get_pos()):
+                self.exit_button.color = (0, 102, 104)
+            if not(self.exit_button.is_over(pygame.mouse.get_pos())):
+                self.exit_button.color = (100,100,100)
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
                     if self.play_button.is_over(mouse_pos):
