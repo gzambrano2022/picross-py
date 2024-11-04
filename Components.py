@@ -2,11 +2,18 @@ from idlelib.colorizer import color_config
 
 import pygame
 
-class MainTitle:
-    def __init__(self, width, height):
-        self.font = pygame.font.Font(None, 100)
-        self.text = self.font.render('PyCross', True, (255,255,255))
-        self.text_rect = self.text.get_rect(center=(width // 2, height // 4))
+
+class Title:
+    def __init__(self, width, height, texto, fuente, tamaño=None):
+        # Si no se especifica un tamaño, se calcula como una fracción del alto de la ventana
+        if tamaño is None:
+            tamaño = height // 12  # Por ejemplo, una doceava parte de la altura de la ventana
+
+        # Usar la fuente y el tamaño proporcionados o calculados
+        self.font = pygame.font.Font(fuente, tamaño)
+        self.text = self.font.render(texto, True, (255, 255, 255))
+        self.text_rect = self.text.get_rect(center=(width // 2, height // 8))
+
     def draw(self, window):
         window.blit(self.text, self.text_rect)
 
