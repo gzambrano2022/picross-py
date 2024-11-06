@@ -1,7 +1,7 @@
 from idlelib.colorizer import color_config
 
 import pygame
-
+import os
 
 class Title:
     def __init__(self, width, height, texto, fuente, tamaño=None):
@@ -22,7 +22,8 @@ class Title:
 
 class Button:
     def __init__(self, x, y, text, font, width=140, height=40, color=(0, 37, 53), text_color=(210, 255, 77),
-                 border_color=(210, 255, 77), border_width=3, shadow_offset=(8,8), shadow_color=(0, 51, 37)):
+                 border_color=(210, 255, 77), border_width=3, shadow_offset=(8, 8), shadow_color=(0, 51, 37),
+                 sound_path= None):  # Añadimos un parámetro para el sonido
         self.x = x
         self.y = y
         self.width = width
@@ -45,6 +46,17 @@ class Button:
         self.shadow_color = shadow_color
         self.is_hovered = False
         self.is_clicked = False
+
+        # Ruta por defecto para el sonido
+        default_sound_path = os.path.join("sounds", "pickupCoin.wav")
+
+        # Cargar sonido si se proporciona un path o si no se pasa se usa el predeterminado
+        self.sound = None
+        if sound_path:
+            self.sound = pygame.mixer.Sound(sound_path)
+        else:
+            # Cargar el sonido por defecto
+            self.sound = pygame.mixer.Sound(default_sound_path)
 
     def draw(self, window):
         # Actualiza el tamaño y color del botón según el estado
@@ -93,6 +105,48 @@ class Button:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1 and self.is_hovered:  # Botón izquierdo del mouse
                 self.is_clicked = True
+                if self.sound:
+                    self.sound.play()
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 self.is_clicked = False
+
+# Clase Slider para controlar el volumen
+class Slider:
+    def __init__(self, x, y, width, min_value=0, max_value=1, initial_value=0.5):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = 5
+        self.min_value = min_value
+        self.max_value = max_value
+        self.value = initial_value  # Valor inicial de volumen
+        self.is_dragging = False  # Verifica si el slider está siendo arrastrado
+        self.handle_width = 20  # Ancho del control deslizante
+
+    def draw(self, window):
+        # Dibuja la barra del slider
+        pygame.draw.rect(window, (200, 200, 200), (self.x, self.y, self.width, self.height))
+
+        # Dibuja el control del slider (circular)
+        handle_x = self.x + (self.value * (self.width - self.handle_width))
+        pygame.draw.circle(window, (255, 0, 66), (int(handle_x), self.y + self.height // 2), self.handle_width // 2)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.is_mouse_over(event.pos):
+                self.is_dragging = True
+        elif event.type == pygame.MOUSEBUTTONUP:
+            self.is_dragging = False
+        elif event.type == pygame.MOUSEMOTION:
+            if self.is_dragging:
+                self.update_value(event.pos)
+
+    def update_value(self, mouse_pos):
+        # Calcula el valor del slider basado en la posición del mouse
+        x = mouse_pos[0] - self.x
+        self.value = max(self.min_value, min(self.max_value, x / self.width))  # Limita el valor entre 0 y 1
+
+    def is_mouse_over(self, pos):
+        # Verifica si el mouse está sobre el slider
+        return self.x <= pos[0] <= self.x + self.width and self.y <= pos[1] <= self.y + self.height
