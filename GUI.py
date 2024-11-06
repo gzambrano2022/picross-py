@@ -6,19 +6,31 @@ import pickle
 import numpy as np
 import random
 from pygame.examples.moveit import WIDTH, HEIGHT
-from Components import Button, Title
+from Components import Button, Title, Slider
+
+# Inicializa Pygame y su mixer
+#pygame.init()
+pygame.mixer.init()
+
+# Reproduce música de fondo al inicio
+pygame.mixer.music.load("sounds/backgroundSong1.mp3")  # Ruta de tu música
+pygame.mixer.music.play(-1)  # -1 Para que la música se reproduzca en loop
+
 
 
 class SettingsManager(Enum):
     GRID_SIZE = 10
     CELL_SIZE = 20
     WIDTH = 1280
-    HEIGHT = 750
+    HEIGHT = 720
     DEFAULT_COLOR = (255, 255, 255)  # blanco
     CLICKED_COLOR = (0, 0, 0)  # negro
     MARKED_COLOR = (255, 0, 0)  # Rojo
     NUMBERS_COLOR = (250, 250, 114) # Amarillo claro
-    BACKGROUND_COLOR = 'gray'
+    BACKGROUND_COLOR = (25, 25, 35) # Gris Azulado
+
+
+
 
 class Scene(ABC):
     def __init__(self, frame_manager):
@@ -64,17 +76,14 @@ class Game(Scene):
 
     def handle_events(self):
         for event in pygame.event.get():
+
+            # Manejar eventos para los botones
+            self.saveButton.handle_event(event)
+            self.backButton.handle_event(event)
+
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
-            if self.saveButton.is_over(pygame.mouse.get_pos()):
-                self.saveButton.color = (0, 102, 104)
-            if not(self.saveButton.is_over(pygame.mouse.get_pos())):
-                self.saveButton.color = (100,100,100)
-            if self.backButton.is_over(pygame.mouse.get_pos()):
-                self.backButton.color = (0, 102, 104)
-            if not(self.backButton.is_over(pygame.mouse.get_pos())):
-                self.backButton.color = (100,100,100)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
@@ -95,7 +104,7 @@ class Game(Scene):
                     self.board.handle_click(event.pos, 2)
 
     def draw(self):
-        self.frame_manager.screen.fill((60,33,89))  # Fondo morado oscuro
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
         self.board.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
         self.saveButton.draw(self.frame_manager.screen)
@@ -203,25 +212,17 @@ class Levels(Scene):
 
     def handle_events(self):
         for event in pygame.event.get():
+
+            # Manejar eventos para los botones
+            self.button_5x5.handle_event(event)
+            self.button_10x10.handle_event(event)
+            self.button_15x15.handle_event(event)
+            self.backButton.handle_event(event)
+
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
-            if self.button_5x5.is_over(pygame.mouse.get_pos()):
-                self.button_5x5.color = (0, 102, 104)
-            if not(self.button_5x5.is_over(pygame.mouse.get_pos())):
-                self.button_5x5.color = (100,100,100)
-            if self.button_10x10.is_over(pygame.mouse.get_pos()):
-                self.button_10x10.color = (0, 102, 104)
-            if not(self.button_10x10.is_over(pygame.mouse.get_pos())):
-                self.button_10x10.color = (100,100,100)
-            if self.button_15x15.is_over(pygame.mouse.get_pos()):
-                self.button_15x15.color = (0, 102, 104)
-            if not(self.button_15x15.is_over(pygame.mouse.get_pos())):
-                self.button_15x15.color = (100,100,100)
-            if self.backButton.is_over(pygame.mouse.get_pos()):
-                self.backButton.color = (0, 102, 104)
-            if not(self.backButton.is_over(pygame.mouse.get_pos())):
-                self.backButton.color = (100,100,100)
+
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -243,7 +244,7 @@ class Levels(Scene):
                         self.running = False
 
     def draw(self):
-        self.frame_manager.screen.fill((60,33,89))  # Fondo morado oscuro
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
         # Dibuja los botones de nivel
         self.button_5x5.draw(self.frame_manager.screen)
         self.button_10x10.draw(self.frame_manager.screen)
@@ -264,45 +265,54 @@ class Levels(Scene):
 
 # Menú Principal
 class Menu(Scene):
-    def __init__(self, frame_manager):
+    def __init__(self, frame_manager, ):
         super().__init__(frame_manager)
         # Crear botones usando la clase Button
-        self.mainTitle = Title(SettingsManager.WIDTH.value,SettingsManager.HEIGHT.value+1000, "PYCROSS", "fonts/Cube.ttf", 50)
-        self.play_button = Button(200, 450, 'Play', self.font)
-        self.exit_button = Button(200, 550, 'Exit', self.font)
+        self.mainTitle = Title(SettingsManager.WIDTH.value, SettingsManager.HEIGHT.value + 1000, "PYCROSS",
+                               "fonts/Cube.ttf", 50)
+        self.play_button = Button(200, 400, 'Play', self.font)
+        self.exit_button = Button(200, 600, 'Exit', self.font)
+        self.option_button = Button(200, 500, 'Option', self.font)
+
+
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
-            if self.play_button.is_over(pygame.mouse.get_pos()):
-                self.play_button.color = (0, 102, 104)
-            if not(self.play_button.is_over(pygame.mouse.get_pos())):
-                self.play_button.color = (100,100,100)
-            if self.exit_button.is_over(pygame.mouse.get_pos()):
-                self.exit_button.color = (0, 102, 104)
-            if not(self.exit_button.is_over(pygame.mouse.get_pos())):
-                self.exit_button.color = (100,100,100)
+
+            # Manejar eventos para los botones
+            self.play_button.handle_event(event)
+            self.exit_button.handle_event(event)
+
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
+                if event.button == 1:  # Verifica si se hace clic con el botón izquierdo del mouse
                     mouse_pos = pygame.mouse.get_pos()
                     if self.play_button.is_over(mouse_pos):
-                        self.frame_manager.switch_to(Levels(self.frame_manager))  # Cambia a ventana Selector de niveles
+                        self.frame_manager.switch_to(
+                            Levels(self.frame_manager))  # Cambia a la ventana del selector de niveles
+                        self.running = False  # Detenemos la ventana
+                    elif self.option_button.is_over(mouse_pos):
+                        self.frame_manager.switch_to(
+                            Options(self.frame_manager))  # Cambia a la ventana del selector de niveles
                         self.running = False  # Detenemos la ventana
                     elif self.exit_button.is_over(mouse_pos):
                         self.running = False
-                        self.frame_manager.current_scene = None  # Para cerrar el programa
+                        self.frame_manager.current_scene = None  # Cierra el programa
 
     def draw(self):
-        self.frame_manager.screen.fill((60,33,89)) # Fondo morado oscuro
-        # Dibuja los botones
+        
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
+
+
+        # Dibuja los elementos en la pantalla
         self.mainTitle.draw(self.frame_manager.screen)
         self.play_button.draw(self.frame_manager.screen)
         self.exit_button.draw(self.frame_manager.screen)
-        pygame.display.flip()
-        # Actualiza la ventana
-        # self.window_manager.update()
+        self.option_button.draw(self.frame_manager.screen)
+        pygame.display.flip()  # Actualiza la ventana
+
 
 class FrameManager:
     def __init__(self):
@@ -432,3 +442,60 @@ class Board:
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
             return False
+
+class Options(Scene):
+    def __init__(self, frame_manager):
+        super().__init__(frame_manager)
+        self.slider = Slider(500, 300, 300, min_value=0, max_value=1, initial_value=0.5)
+        self.song_name = "Darude - Sandstorm"  # Nombre del archivo que se está reproduciendo
+        self.text_x = SettingsManager.WIDTH.value  # Comienza fuera de la pantalla, a la derecha
+        self.text_y = SettingsManager.HEIGHT.value - 40  # Ubicación vertical en la parte inferior
+
+        self.back_button = Button(200, 500, 'Back', self.font)
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            self.back_button.handle_event(event)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Verifica si se hace clic con el botón izquierdo del mouse
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.back_button.is_over(mouse_pos):
+                        self.frame_manager.switch_to(
+                            Menu(self.frame_manager))  # Cambia a la ventana del selector de niveles
+                        self.running = False  # Detenemos la ventana
+
+            if event.type == pygame.QUIT:
+                self.running = False
+                self.frame_manager.current_scene = None
+            self.slider.handle_event(event)
+
+    def draw(self):
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
+        self.slider.draw(self.frame_manager.screen)
+        self.back_button.draw(self.frame_manager.screen)
+
+        # Muestra el valor del volumen
+        font = pygame.font.Font("fonts/monogram.ttf", 36)
+        text = font.render(f"Volume: {int(self.slider.value * 100)}%", True, (255, 255, 255))
+        self.frame_manager.screen.blit(text, (self.slider.x, self.slider.y - 40))
+
+        # Ajusta el volumen de la música
+        pygame.mixer.music.set_volume(self.slider.value)
+
+        # Deslizar el texto del nombre del archivo
+        self.draw_sliding_text(self.song_name)
+
+        pygame.display.flip()
+
+    def draw_sliding_text(self, text):
+        font = pygame.font.Font("fonts/monogram.ttf", 36)
+        rendered_text = font.render(text, True, (210, 255, 77))
+
+        # Dibujar el texto deslizando hacia la izquierda
+        self.frame_manager.screen.blit(rendered_text, (self.text_x, self.text_y))
+
+        # Actualizar la posición para el deslizamiento
+        self.text_x -= 0.25  # Ajusta la velocidad de deslizamiento
+        if self.text_x < -rendered_text.get_width():
+            self.text_x = SettingsManager.WIDTH.value  # Restablecer la posición al lado derecho cuando se ha deslizado completamente
