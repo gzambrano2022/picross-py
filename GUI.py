@@ -190,26 +190,6 @@ class Levels(Scene):
         # Crear el texto del título
         self.SubTitle = Title(SettingsManager.WIDTH.value, SettingsManager.HEIGHT.value, "LEVELS", "fonts/ka1.ttf")
 
-
-    def random_solution(self,size):
-        folder_path = os.path.join('solutions',f's_{size}x{size}')
-
-        # Obtener la lista de archivos .pkl
-        solution_files = [file for file in os.listdir(folder_path) if file.endswith('.pkl')]
-
-        # Elegir archivo aleatorio de la lista
-        if solution_files:
-            random_file = random.choice(solution_files)
-            file_path = os.path.join(folder_path, random_file)
-
-            # Cargar y devolver contenido '.pkl'
-            with open(file_path, 'rb') as f:
-                solution = pickle.load(f)
-            return solution
-        else:
-            print("No se encontraron archivos .pkl en la carpeta.")
-            self.frame_manager.switch_to(Levels(self.frame_manager))
-
     def handle_events(self):
         for event in pygame.event.get():
 
@@ -231,15 +211,12 @@ class Levels(Scene):
                         self.frame_manager.switch_to(Menu(self.frame_manager))  # Cambia a ventana Menu
                         self.running = False  # Detenemos la ventana
                     elif self.button_5x5.is_over(mouse_pos):
-                        #solution = self.random_solution(5)
                         self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=5))  # nonogramas de tam 5x5
                         self.running = False
                     elif self.button_10x10.is_over(mouse_pos):
-                        #solution = self.random_solution(10)
                         self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=10))  # nonogramas de tam 10x10
                         self.running = False
                     elif self.button_15x15.is_over(mouse_pos):
-                        #solution = self.random_solution(15)
                         self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=15))  # nonogramas de tam 15x15
                         self.running = False
 
