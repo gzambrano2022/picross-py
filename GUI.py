@@ -231,16 +231,16 @@ class Levels(Scene):
                         self.frame_manager.switch_to(Menu(self.frame_manager))  # Cambia a ventana Menu
                         self.running = False  # Detenemos la ventana
                     elif self.button_5x5.is_over(mouse_pos):
-                        solution = self.random_solution(5)
-                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=5,solution=solution))  # 5x5 grid
+                        #solution = self.random_solution(5)
+                        self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=5))  # nonogramas de tam 5x5
                         self.running = False
                     elif self.button_10x10.is_over(mouse_pos):
-                        solution = self.random_solution(10)
-                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=10,solution=solution))  # 10x10 grid
+                        #solution = self.random_solution(10)
+                        self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=10))  # nonogramas de tam 10x10
                         self.running = False
                     elif self.button_15x15.is_over(mouse_pos):
-                        solution = self.random_solution(15)
-                        self.frame_manager.switch_to(Game(self.frame_manager, grid_size=15,solution=solution))  # 15x15 grid
+                        #solution = self.random_solution(15)
+                        self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=15))  # nonogramas de tam 15x15
                         self.running = False
 
     def draw(self):
@@ -273,8 +273,6 @@ class Menu(Scene):
         self.play_button = Button(200, 400, 'Play', self.font)
         self.exit_button = Button(200, 600, 'Exit', self.font)
         self.option_button = Button(200, 500, 'Option', self.font)
-
-
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -312,6 +310,48 @@ class Menu(Scene):
         self.exit_button.draw(self.frame_manager.screen)
         self.option_button.draw(self.frame_manager.screen)
         pygame.display.flip()  # Actualiza la ventana
+
+class Nonos(Scene):
+    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, ):
+        super().__init__(frame_manager)
+        self.button_custom = Button(650, 80, 'Personalizado', self.font,width=200,height=60)
+        self.backButton = Button(50, 600, 'Back', self.font)
+        self.buttons = []
+
+        # Crear botones de cada nonograma solución dentro de la carpeta solutions
+        folder_path = os.path.join('solutions',f's_{grid_size}x{grid_size}')
+        solutions_files = [file for file in os.listdir(folder_path) if file.endswith('.pkl')]
+        for i,file in enumerate(solutions_files):
+            button = Button(650, 120+(i+1)*90, f'{i+1}',self.font,width=200, height=60)
+            self.buttons.append(button)
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            # Manejar eventos para los botones
+            for button in self.buttons:
+                button.handle_event(event)
+            self.button_custom.handle_event(event)
+            self.backButton.handle_event(event)
+
+            if event.type == pygame.QUIT:
+                self.running = False
+                self.frame_manager.current_scene = None
+
+    def draw(self):
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
+        # Dibuja los botones de cada nonograma a resolver
+        self.button_custom.draw(self.frame_manager.screen)
+        self.backButton.draw(self.frame_manager.screen)
+        for button in self.buttons:
+            button.draw(self.frame_manager.screen)
+
+        # Actualiza la ventana
+        pygame.display.flip()
+
+
+
+
+
 
 
 class FrameManager:
