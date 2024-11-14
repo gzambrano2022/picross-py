@@ -342,7 +342,7 @@ class Nonos(Scene):
                                 print(f"Se cargó la solución {i+1}.")
                                 self.frame_manager.switch_to(Game(self.frame_manager,self.grid_size, solution=solution))
                                 self.running = False
-                            break
+                        break
 
 
 
