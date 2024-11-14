@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import pickle
 import numpy as np
-import random
 from pygame.examples.moveit import WIDTH, HEIGHT
 from Components import Button, Title, Slider
 
@@ -307,11 +306,18 @@ class Nonos(Scene):
     def IniciarNono(self,number):
         if 0 <= number < len(self.solutions_files):
             file_path = self.solutions_files[number]
-            with open(file_path, 'rb') as f:
-                solution = pickle.load(f)
-            return solution
+
+            # Intenta abrir el archivo y cargar la solución
+            try:
+                with open(file_path, 'rb') as f:
+                    solution = pickle.load(f)
+                return solution
+            except FileNotFoundError:
+                print(f"Archivo no encontrado: {file_path}")
+                return None
         else:
-            print("No se enocntró archivo.")
+            print("Índice fuera de rango")
+            return None
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -356,12 +362,6 @@ class Nonos(Scene):
 
         # Actualiza la ventana
         pygame.display.flip()
-
-
-
-
-
-
 
 class FrameManager:
     def __init__(self):
