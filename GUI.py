@@ -314,6 +314,7 @@ class Menu(Scene):
 class Nonos(Scene):
     def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, ):
         super().__init__(frame_manager)
+        self.grid_size = grid_size
         self.button_custom = Button(650, 80, 'Personalizado', self.font,width=200,height=60)
         self.backButton = Button(50, 600, 'Back', self.font)
         self.buttons = []
@@ -321,9 +322,19 @@ class Nonos(Scene):
         # Crear botones de cada nonograma solución dentro de la carpeta solutions
         folder_path = os.path.join('solutions',f's_{grid_size}x{grid_size}')
         solutions_files = [file for file in os.listdir(folder_path) if file.endswith('.pkl')]
+        self.solutions_files = [os.path.join(folder_path, file) for file in solutions_files]
         for i,file in enumerate(solutions_files):
             button = Button(650, 120+(i+1)*90, f'{i+1}',self.font,width=200, height=60)
             self.buttons.append(button)
+
+    def IniciarNono(self,number):
+        if 0 <= number < len(self.solutions_files):
+            file_path = self.solutions_files[number]
+            with open(file_path, 'rb') as f:
+                solution = pickle.load(f)
+            return solution
+        else:
+            print("No se enocntró archivo.")
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -336,6 +347,27 @@ class Nonos(Scene):
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.backButton.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Levels(self.frame_manager)) # Cambia a ventana Levels
+                        self.running = False
+                    elif self.button_custom.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Levels(self.frame_manager)) # Por el momento cambia a ventana Levels
+                        self.running = False
+                    # Verificar si se hizo click en cualquiera de los botones de la lista
+                    else:
+                        for i,button in enumerate(self.buttons):
+                            if button.is_over(mouse_pos):
+                                solution = self.IniciarNono(i)
+                                print(f"Se cargó la solución {i+1}.")
+                                self.frame_manager.switch_to(Game(self.frame_manager,self.grid_size, solution=solution))
+                                self.running = False
+                            break
+
+
 
     def draw(self):
         self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
