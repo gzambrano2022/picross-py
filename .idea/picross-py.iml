@@ -5,7 +5,11 @@
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
+<<<<<<< HEAD
     <orderEntry type="jdk" jdkName="Python 3.12 (picross-py)" jdkType="Python SDK" />
+=======
+    <orderEntry type="jdk" jdkName="Python 3.11 (picross-py)" jdkType="Python SDK" />
+>>>>>>> 21e6e5321feefddb094e44bd84c80dd4aa89b863
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
