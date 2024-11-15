@@ -58,6 +58,7 @@ class Game(Scene):
     def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, solution=None):
         super().__init__(frame_manager)
         self.clock = pygame.time.Clock()
+        self.current_state = np.zeros((grid_size, grid_size))
 
         cell_size = min(
             SettingsManager.WIDTH.value // grid_size,
@@ -69,7 +70,7 @@ class Game(Scene):
         else:
             logical_board = LogicalBoard(np.zeros((grid_size, grid_size)))  # o alguna lógica para inicializar
 
-        self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
+        self.board = Board(grid_size,WIDTH,HEIGHT,logical_board,self)  # Usa el tamaño del grid recibido
         self.backButton = Button(50, 600, 'Back', self.font)
         self.saveButton = Button(50, 550, 'Save', self.font)
 
@@ -398,7 +399,7 @@ class Cell:
 class Board:
     save_cont = {} # Diccionario para llevar la cuenta de los archivos guardados.
 
-    def __init__(self, grid_size, frame_width, frame_height, logicalboard):
+    def __init__(self, grid_size, frame_width, frame_height, logicalboard, game_instance):
         self.cell_size = min(frame_width // grid_size, frame_height // grid_size)
         self.grid_size = grid_size
         self.logical_board = logicalboard
@@ -410,6 +411,7 @@ class Board:
         self.carray = self.logical_board.find_numbers_c()
 
         self.font = pygame.font.SysFont(None, 36)
+        self.game_instance = game_instance
 
     def draw(self, surface):
         board_width = self.grid_size * self.cell_size
@@ -454,16 +456,16 @@ class Board:
                 ))
 
     def handle_click(self, pos, num_click):  # pos son coordenadas (x,y) en pygame. num_click: 1 right, 2 left
-        if num_click == 1:
-            row = (pos[1] - self.offset_y) // self.cell_size
-            col = (pos[0] - self.offset_x) // self.cell_size
-            if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+        row=(pos[1] - self.offset_y) // self.cell_size
+        col=(pos[0] - self.offset_x) // self.cell_size
+
+        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+            if num_click == 1:
                 self.board[row][col].click()
-        elif num_click == 2:
-            row = (pos[1] - self.offset_y) // self.cell_size
-            col = (pos[0] - self.offset_x) // self.cell_size
-            if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+                self.game_instance.current_state[row][col]=1 if self.board[row][col].clicked else 0
+            elif num_click == 2:
                 self.board[row][col].mark()
+                self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
 
     def guardar(self, filename):
         # Obtener el directorio del proyecto
