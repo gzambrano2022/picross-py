@@ -488,7 +488,7 @@ class Board:
         try:
             print("Guardando archivo en:", full_path)
             with open(full_path, 'wb') as file: # Abre en modo binario para guardar con pickle
-                pickle.dump(self.board, file) # Guarda el tablero en el archivo
+                pickle.dump(self.game_instance.current_state, file) # Guarda el tablero en el archivo
             return True
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
