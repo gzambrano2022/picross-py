@@ -472,9 +472,13 @@ class Board:
         proyecto_directory = os.path.dirname(os.path.abspath(__file__))
         saved_files_directory = os.path.join(proyecto_directory, 'saved_files')
 
+        #Subdirectorio por tamaño
+        subdirectory = f'saved_files_{self.grid_size}x{self.grid_size}'
+        subdirectory_path = os.path.join(saved_files_directory, subdirectory)
+
         # Crear el subdirectorio si no existe
-        if not os.path.exists(saved_files_directory):
-            os.makedirs(saved_files_directory)
+        if not os.path.exists(subdirectory_path):
+            os.makedirs(subdirectory_path)
 
         # Agregar timestamp al nombre del archivo
         if self.grid_size not in Board.save_cont:
@@ -483,7 +487,7 @@ class Board:
             Board.save_cont[self.grid_size] += 1
 
         full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl" # Ejemplo: saved_board_5x5_1.pkl
-        full_path = os.path.join(saved_files_directory, full_name) # Combinar ruta del subdirectorio con nombre archivo
+        full_path = os.path.join(subdirectory_path, full_name) # Combinar ruta del subdirectorio con nombre archivo
 
         try:
             print("Guardando archivo en:", full_path)
