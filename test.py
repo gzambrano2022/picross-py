@@ -15,26 +15,35 @@ def setuppygame():
 
 @pytest.mark.parametrize("grid_size", [5, 10, 15])
 def test_guardar(grid_size):
-    os.makedirs('saved_files', exist_ok=True)
+    subdirectory_path = os.path.join('saved_files', f'saved_files_{grid_size}x{grid_size}')
+    os.makedirs(subdirectory_path, exist_ok=True)
 
     mock_logicalboard = MagicMock()
+    game_instance = MagicMock()
+    game_instance.current_state = [[0] * grid_size for _ in range(grid_size)]
 
     board = Board(
         grid_size=grid_size,
         frame_width=500,
         frame_height=500,
-        logicalboard=mock_logicalboard
+        logicalboard=mock_logicalboard,
+        game_instance=game_instance
     )
 
-
-    board.board[0][0].click()
+    board.board[0][0].clicked = True
     filename = 'saved_board'
     assert board.guardar(filename) == True
-    assert any(filename in f for f in os.listdir('saved_files'))
 
-    for f in os.listdir('saved_files'):
+    # Verificar que el archivo se haya guardado en el subdirectorio correcto
+    saved_files = os.listdir(subdirectory_path)
+    print(f"Archivos guardados en {subdirectory_path}: {saved_files}")  # Añadir depuración
+    assert any(filename in f for f in saved_files)
+
+    # Limpiar archivos guardados después del test
+    for f in saved_files:
         if filename in f:
-            os.remove(os.path.join('saved_files', f))
+            os.remove(os.path.join(subdirectory_path, f))
+
 
 
 
