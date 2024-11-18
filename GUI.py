@@ -112,11 +112,13 @@ class Game(Scene):
 class LogicalBoard:
     def __init__(self, grid_size,solution=None):
         self.grid_size = grid_size
+        self.board_l = np.zeros((grid_size, grid_size))
 
         if solution is not None:
-            self.board_l = np.array(solution)
+            self.board_s = np.array(solution)
         else:
-            self.board_l = np.zeros((grid_size,grid_size))
+            self.board_s = np.zeros((grid_size,grid_size))
+
 
     def find_numbers_r(self):
         rarray = []
@@ -126,7 +128,7 @@ class LogicalBoard:
             cont  = 0
             array = []
             for j in range(self.grid_size):
-                if self.board_l[i][j] == 1:
+                if self.board_s[i][j] == 1:
                     cont += 1
                 else:
                     if cont>0:
@@ -149,7 +151,7 @@ class LogicalBoard:
             cont = 0
             array = []
             for j in range(self.grid_size):
-                if self.board_l[j][i] == 1:
+                if self.board_s[j][i] == 1:
                     cont += 1
                 else:
                     if cont > 0:
