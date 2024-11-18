@@ -5,16 +5,8 @@ from enum import Enum
 import pickle
 import numpy as np
 from pygame.examples.moveit import WIDTH, HEIGHT
-from Components import Button, Title, Slider
-
-# Inicializa Pygame y su mixer
-#pygame.init()
-pygame.mixer.init()
-
-# Reproduce música de fondo al inicio
-pygame.mixer.music.load("sounds/backgroundSong1.mp3")  # Ruta de tu música
-pygame.mixer.music.play(-1)  # -1 Para que la música se reproduzca en loop
-
+from pygame.mixer_music import get_volume
+from Components import Button, Title, Slider, ToggleButton
 
 
 class SettingsManager(Enum):
@@ -27,6 +19,35 @@ class SettingsManager(Enum):
     MARKED_COLOR = (255, 0, 0)  # Rojo
     NUMBERS_COLOR = (250, 250, 114) # Amarillo claro
     BACKGROUND_COLOR = (25, 25, 35) # Gris Azulado
+
+class AudioManager:
+    def __init__(self):
+        pygame.mixer.init()
+        self.cancion_actual = None
+        self.muteado = False  # Variable para controlar el estado del mute
+        self.previous_volume = 1  # Inicializamos el volumen previo en 1 (máximo)
+
+
+    def reproducir_musica(self, archivo):
+        pygame.mixer.music.load(archivo)
+        pygame.mixer.music.play(-1)  # -1 para reproducir en bucle
+
+    def ajustar_volumen(self, volumen):
+        pygame.mixer.music.set_volume(volumen)
+
+    def mute(self):
+        # Si el volumen es mayor que 0, almacenamos el valor actual y silenciamos
+        if pygame.mixer.music.get_volume() > 0:
+            self.previous_volume = pygame.mixer.music.get_volume()
+            pygame.mixer.music.set_volume(0)
+        # Si el volumen es 0, restauramos el valor previo
+        else:
+            pygame.mixer.music.set_volume(self.previous_volume)
+
+#Se ejecuta de manera global la reproduccion de musica para evitar el problema de instanciar en cada escena
+audio_manager = AudioManager()
+audio_manager.reproducir_musica("sounds/backgroundSong1.mp3")
+
 
 
 
@@ -70,8 +91,10 @@ class Game(Scene):
             logical_board = LogicalBoard(np.zeros((grid_size, grid_size)))  # o alguna lógica para inicializar
 
         self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
-        self.backButton = Button(50, 600, 'Back', self.font)
-        self.saveButton = Button(50, 550, 'Save', self.font)
+        self.backButton = Button(1000, 500, 'Back', self.font)
+        self.saveButton = Button(1000, 450, 'Save', self.font)
+        self.music_button = ToggleButton(1000, 600, text=None, font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
+        self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -79,6 +102,7 @@ class Game(Scene):
             # Manejar eventos para los botones
             self.saveButton.handle_event(event)
             self.backButton.handle_event(event)
+            self.music_button.handle_event(event)
 
             if event.type == pygame.QUIT:
                 self.running = False
@@ -96,9 +120,14 @@ class Game(Scene):
                             print("Tablero guardado correctamente.")
                         else:
                             print("Error al guardar el tablero.")
+                    elif self.music_button.is_over(mouse_pos):
+                        # silenciar música cuando se presiona el botón de música
+                        self.audio_manager.mute()
+
                     else:
                         # Aquí manejamos el clic izquierdo en el tablero
                         self.board.handle_click(event.pos, 1)  # Pasamos el clic izquierdo (1) a board
+
                 elif event.button == 3:
                     self.board.handle_click(event.pos, 2)
 
@@ -107,6 +136,7 @@ class Game(Scene):
         self.board.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
         self.saveButton.draw(self.frame_manager.screen)
+        self.music_button.draw(self.frame_manager.screen)
         pygame.display.flip()
 
 class LogicalBoard:
@@ -175,6 +205,8 @@ class Levels(Scene):
         self.button_10x10 = Button(565, 200, '10x10', self.font)
         self.button_15x15 = Button(935, 200, '15x15', self.font)
         self.backButton = Button(50, 600, 'Back', self.font)
+        self.music_button = ToggleButton(1000,600, text=None,font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
+        self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
 
         # Crear imagenes referencia
         pry_dir = os.path.dirname(os.path.abspath(__file__))
@@ -199,6 +231,7 @@ class Levels(Scene):
             self.button_10x10.handle_event(event)
             self.button_15x15.handle_event(event)
             self.backButton.handle_event(event)
+            self.music_button.handle_event(event)
 
             if event.type == pygame.QUIT:
                 self.running = False
@@ -220,6 +253,9 @@ class Levels(Scene):
                     elif self.button_15x15.is_over(mouse_pos):
                         self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=15))  # nonogramas de tam 15x15
                         self.running = False
+                    elif self.music_button.is_over(mouse_pos):
+                        # silenciar música cuando se presiona el botón de música
+                        self.audio_manager.mute()
 
     def draw(self):
         self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
@@ -230,20 +266,17 @@ class Levels(Scene):
         self.backButton.draw(self.frame_manager.screen)
         self.SubTitle.draw(self.frame_manager.screen)
 
-        # Dibuja título
-        #self.frame_manager.screen.blit(self.title, (80,50))
-
         #  Dibuja imagenes
         self.frame_manager.screen.blit(self.imagen1, (150, 300))
         self.frame_manager.screen.blit(self.imagen2, (530, 300))
         self.frame_manager.screen.blit(self.imagen3, (900, 300))
-
+        self.music_button.draw(self.frame_manager.screen)
         # Actualiza la ventana
         pygame.display.flip()
 
 # Menú Principal
 class Menu(Scene):
-    def __init__(self, frame_manager, ):
+    def __init__(self, frame_manager ):
         super().__init__(frame_manager)
         # Crear botones usando la clase Button
         self.mainTitle = Title(SettingsManager.WIDTH.value, SettingsManager.HEIGHT.value + 1000, "PYCROSS",
@@ -251,6 +284,8 @@ class Menu(Scene):
         self.play_button = Button(200, 400, 'Play', self.font)
         self.exit_button = Button(200, 600, 'Exit', self.font)
         self.option_button = Button(200, 500, 'Option', self.font)
+        self.music_button = ToggleButton(1000,600, text=None,font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
+        self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -261,6 +296,8 @@ class Menu(Scene):
             # Manejar eventos para los botones
             self.play_button.handle_event(event)
             self.exit_button.handle_event(event)
+            self.option_button.handle_event(event)
+            self.music_button.handle_event(event)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Verifica si se hace clic con el botón izquierdo del mouse
@@ -276,6 +313,12 @@ class Menu(Scene):
                     elif self.exit_button.is_over(mouse_pos):
                         self.running = False
                         self.frame_manager.current_scene = None  # Cierra el programa
+                    elif self.music_button.is_over(mouse_pos):
+                        # silenciar música cuando se presiona el botón de música
+                        self.audio_manager.mute()
+
+
+
 
     def draw(self):
         
@@ -287,6 +330,7 @@ class Menu(Scene):
         self.play_button.draw(self.frame_manager.screen)
         self.exit_button.draw(self.frame_manager.screen)
         self.option_button.draw(self.frame_manager.screen)
+        self.music_button.draw(self.frame_manager.screen)
         pygame.display.flip()  # Actualiza la ventana
 
 class Nonos(Scene):
@@ -384,10 +428,18 @@ class Cell:
         self.marked = False
 
     def click(self):
-        self.clicked = not self.clicked
+        if self.marked:
+            self.marked = False
+            self.clicked = True
+        else:
+            self.clicked = not self.clicked
 
     def mark(self):
-        self.marked = not self.marked
+        if self.clicked:
+            self.clicked = False
+            self.marked = True
+        else:
+            self.marked = not self.marked
 
     def get_color(self):
         if self.clicked:
@@ -497,7 +549,7 @@ class Board:
 class Options(Scene):
     def __init__(self, frame_manager):
         super().__init__(frame_manager)
-        self.slider = Slider(500, 300, 300, min_value=0, max_value=1, initial_value=0.5)
+        self.slider = Slider(500, 300, 300, min_value=0, max_value=1, initial_value=pygame.mixer_music.get_volume())
         self.song_name = "Darude - Sandstorm"  # Nombre del archivo que se está reproduciendo
         self.text_x = SettingsManager.WIDTH.value  # Comienza fuera de la pantalla, a la derecha
         self.text_y = SettingsManager.HEIGHT.value - 40  # Ubicación vertical en la parte inferior
@@ -507,6 +559,7 @@ class Options(Scene):
     def handle_events(self):
         for event in pygame.event.get():
             self.back_button.handle_event(event)
+            self.slider.handle_event(event)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Verifica si se hace clic con el botón izquierdo del mouse
@@ -519,7 +572,9 @@ class Options(Scene):
             if event.type == pygame.QUIT:
                 self.running = False
                 self.frame_manager.current_scene = None
-            self.slider.handle_event(event)
+            # Ajusta el volumen de la música
+            audio_manager.ajustar_volumen(self.slider.value)
+
 
     def draw(self):
         self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
@@ -531,8 +586,7 @@ class Options(Scene):
         text = font.render(f"Volume: {int(self.slider.value * 100)}%", True, (255, 255, 255))
         self.frame_manager.screen.blit(text, (self.slider.x, self.slider.y - 40))
 
-        # Ajusta el volumen de la música
-        pygame.mixer.music.set_volume(self.slider.value)
+
 
         # Deslizar el texto del nombre del archivo
         self.draw_sliding_text(self.song_name)
