@@ -16,8 +16,6 @@ pygame.mixer.init()
 pygame.mixer.music.load("sounds/backgroundSong1.mp3")  # Ruta de tu música
 pygame.mixer.music.play(-1)  # -1 Para que la música se reproduzca en loop
 
-
-
 class SettingsManager(Enum):
     GRID_SIZE = 10
     CELL_SIZE = 20
@@ -333,10 +331,18 @@ class Cell:
         self.marked = False
 
     def click(self):
-        self.clicked = not self.clicked
+        if self.marked:
+            self.marked = False
+            self.clicked = True
+        else:
+            self.clicked = not self.clicked
 
     def mark(self):
-        self.marked = not self.marked
+        if self.clicked:
+            self.clicked = False
+            self.marked = True
+        else:
+            self.marked = not self.marked
 
     def get_color(self):
         if self.clicked:
