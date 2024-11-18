@@ -79,6 +79,7 @@ class Game(Scene):
     def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, solution=None):
         super().__init__(frame_manager)
         self.clock = pygame.time.Clock()
+        self.current_state = np.zeros((grid_size, grid_size))
 
         cell_size = min(
             SettingsManager.WIDTH.value // grid_size,
@@ -90,7 +91,7 @@ class Game(Scene):
         else:
             logical_board = LogicalBoard(np.zeros((grid_size, grid_size)))  # o alguna lógica para inicializar
 
-        self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
+        self.board = Board(grid_size,WIDTH,HEIGHT,logical_board,self)  # Usa el tamaño del grid reci
         self.backButton = Button(1000, 500, 'Back', self.font)
         self.saveButton = Button(1000, 450, 'Save', self.font)
         self.music_button = ToggleButton(1000, 600, text=None, font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
@@ -450,7 +451,7 @@ class Cell:
 class Board:
     save_cont = {} # Diccionario para llevar la cuenta de los archivos guardados.
 
-    def __init__(self, grid_size, frame_width, frame_height, logicalboard):
+    def __init__(self, grid_size, frame_width, frame_height, logicalboard, game_instance):
         self.cell_size = min(frame_width // grid_size, frame_height // grid_size)
         self.grid_size = grid_size
         self.logical_board = logicalboard
@@ -462,6 +463,7 @@ class Board:
         self.carray = self.logical_board.find_numbers_c()
 
         self.font = pygame.font.SysFont(None, 36)
+        self.game_instance = game_instance
 
     def draw(self, surface):
         board_width = self.grid_size * self.cell_size
@@ -506,25 +508,29 @@ class Board:
                 ))
 
     def handle_click(self, pos, num_click):  # pos son coordenadas (x,y) en pygame. num_click: 1 right, 2 left
-        if num_click == 1:
-            row = (pos[1] - self.offset_y) // self.cell_size
-            col = (pos[0] - self.offset_x) // self.cell_size
-            if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+        row=(pos[1] - self.offset_y) // self.cell_size
+        col=(pos[0] - self.offset_x) // self.cell_size
+
+        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+            if num_click == 1:
                 self.board[row][col].click()
-        elif num_click == 2:
-            row = (pos[1] - self.offset_y) // self.cell_size
-            col = (pos[0] - self.offset_x) // self.cell_size
-            if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+                self.game_instance.current_state[row][col]=1 if self.board[row][col].clicked else 0
+            elif num_click == 2:
                 self.board[row][col].mark()
+                self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
 
     def guardar(self, filename):
         # Obtener el directorio del proyecto
         proyecto_directory = os.path.dirname(os.path.abspath(__file__))
         saved_files_directory = os.path.join(proyecto_directory, 'saved_files')
 
+        #Subdirectorio por tamaño
+        subdirectory = f'saved_files_{self.grid_size}x{self.grid_size}'
+        subdirectory_path = os.path.join(saved_files_directory, subdirectory)
+
         # Crear el subdirectorio si no existe
-        if not os.path.exists(saved_files_directory):
-            os.makedirs(saved_files_directory)
+        if not os.path.exists(subdirectory_path):
+            os.makedirs(subdirectory_path)
 
         # Agregar timestamp al nombre del archivo
         if self.grid_size not in Board.save_cont:
@@ -533,12 +539,12 @@ class Board:
             Board.save_cont[self.grid_size] += 1
 
         full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl" # Ejemplo: saved_board_5x5_1.pkl
-        full_path = os.path.join(saved_files_directory, full_name) # Combinar ruta del subdirectorio con nombre archivo
+        full_path = os.path.join(subdirectory_path, full_name) # Combinar ruta del subdirectorio con nombre archivo
 
         try:
             print("Guardando archivo en:", full_path)
             with open(full_path, 'wb') as file: # Abre en modo binario para guardar con pickle
-                pickle.dump(self.board, file) # Guarda el tablero en el archivo
+                pickle.dump(self.game_instance.current_state, file) # Guarda el tablero en el archivo
             return True
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
