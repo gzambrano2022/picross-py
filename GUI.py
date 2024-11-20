@@ -117,7 +117,7 @@ class Game(Scene):
                         self.running = False
                     elif self.saveButton.is_over(mouse_pos):
                         filename = 'saved_board'
-                        if self.board.guardar(filename):
+                        if self.board.guardar(filename, self.solution):
                             print("Tablero guardado correctamente.")
                         else:
                             print("Error al guardar el tablero.")
@@ -519,8 +519,7 @@ class Board:
                 self.board[row][col].mark()
                 self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
 
-    def guardar(self, filename):
-        # Obtener el directorio del proyecto
+    def guardar(self, filename, solution):
         proyecto_directory = os.path.dirname(os.path.abspath(__file__))
         saved_files_directory = os.path.join(proyecto_directory, 'saved_files')
 
@@ -538,13 +537,18 @@ class Board:
         else:
             Board.save_cont[self.grid_size] += 1
 
-        full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl" # Ejemplo: saved_board_5x5_1.pkl
-        full_path = os.path.join(subdirectory_path, full_name) # Combinar ruta del subdirectorio con nombre archivo
+        full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl"
+        full_path = os.path.join(subdirectory_path, full_name)
+
+        save_data = {
+            'current_state': self.game_instance.current_state,
+            'solution': solution
+        }
 
         try:
             print("Guardando archivo en:", full_path)
-            with open(full_path, 'wb') as file: # Abre en modo binario para guardar con pickle
-                pickle.dump(self.game_instance.current_state, file) # Guarda el tablero en el archivo
+            with open(full_path, 'wb') as file:
+                pickle.dump(save_data, file)
             return True
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
