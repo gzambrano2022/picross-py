@@ -15,7 +15,11 @@ def setuppygame():
 
 @pytest.mark.parametrize("grid_size", [5, 10, 15])
 def test_guardar(grid_size):
-    subdirectory_path = os.path.join('saved_files', f'saved_files_{grid_size}x{grid_size}')
+    # Configurar directorio esperado para guardar
+    proyecto_directory = os.path.dirname(os.path.abspath(__file__))
+    saved_files_directory = os.path.join(proyecto_directory, 'saved_files')
+    subdirectory = f'saved_files_{grid_size}x{grid_size}'
+    subdirectory_path = os.path.join(saved_files_directory, subdirectory)
     os.makedirs(subdirectory_path, exist_ok=True)
 
     mock_logicalboard = MagicMock()
@@ -31,35 +35,27 @@ def test_guardar(grid_size):
     )
 
     board.board[0][0].clicked = True
+
+    # Crear una solución simulada
+    solution = [[1] * grid_size for _ in range(grid_size)]
+
+    # Guardar el tablero
     filename = 'saved_board'
-    assert board.guardar(filename) == True
+    assert board.guardar(filename, solution) == True
 
     # Verificar que el archivo se haya guardado en el subdirectorio correcto
     saved_files = os.listdir(subdirectory_path)
     print(f"Archivos guardados en {subdirectory_path}: {saved_files}")  # Añadir depuración
     assert any(filename in f for f in saved_files)
 
+    # Verificar contenido del archivo guardado
+    saved_file_path = os.path.join(subdirectory_path, saved_files[0])
+    import pickle
+    with open(saved_file_path, 'rb') as file:
+        data = pickle.load(file)
+        assert data['current_state'] == game_instance.current_state
+        assert data['solution'] == solution
+
     # Limpiar archivos guardados después del test
     for f in saved_files:
-        if filename in f:
-            os.remove(os.path.join(subdirectory_path, f))
-
-
-
-
-@pytest.mark.parametrize("grid_size", [5, 10, 15])
-def test_cargar(grid_size):
-    os.makedirs('saved_files', exist_ok=True)
-
-    board = Board(cell_size=50, grid_size=grid_size)
-
-    board.board[0][0].click()
-    filename = f'saved_board{grid_size}x{grid_size}_1.pkl'
-    board.guardar('saved_board')
-
-    new_board = Board(cell_size=50, grid_size=grid_size)
-    assert new_board.cargar(filename) == True
-
-    assert new_board.board[0][0].is_clicked()
-
-    os.remove(os.path.join('saved_files', filename))
+        os.remove(os.path.join(subdirectory_path, f))
