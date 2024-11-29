@@ -367,8 +367,10 @@ class Nonos(Scene):
             # Manejar eventos para los botones
             for button in self.buttons:
                 button.handle_event(event)
+
             self.button_custom.handle_event(event)
             self.backButton.handle_event(event)
+            self.load_button.handle_event(event)
 
             if event.type == pygame.QUIT:
                 self.running = False
@@ -420,13 +422,14 @@ class Nonos(Scene):
         # Mostrar pantalla para seleccionar archivo
         self.running = True
         while self.running:
-            self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
-            for button, path in self.load_buttons:
-                button.draw(self.frame_manager.screen)
-
-            pygame.display.flip()
-
             for event in pygame.event.get():
+                self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
+                for button, path in self.load_buttons:
+                    button.handle_event(event)
+                    button.draw(self.frame_manager.screen)
+
+                pygame.display.flip()
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
                     for button, path in self.load_buttons:
