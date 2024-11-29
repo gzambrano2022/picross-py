@@ -20,13 +20,13 @@ class SettingsManager(Enum):
     NUMBERS_COLOR = (250, 250, 114) # Amarillo claro
     BACKGROUND_COLOR = (25, 25, 35) # Gris Azulado
 
+
 class AudioManager:
     def __init__(self):
         pygame.mixer.init()
         self.cancion_actual = None
         self.muteado = False  # Variable para controlar el estado del mute
         self.previous_volume = 1  # Inicializamos el volumen previo en 1 (máximo)
-
 
     def reproducir_musica(self, archivo):
         pygame.mixer.music.load(archivo)
@@ -44,12 +44,10 @@ class AudioManager:
         else:
             pygame.mixer.music.set_volume(self.previous_volume)
 
+
 #Se ejecuta de manera global la reproduccion de musica para evitar el problema de instanciar en cada escena
 audio_manager = AudioManager()
 audio_manager.reproducir_musica("sounds/backgroundSong1.mp3")
-
-
-
 
 
 class Scene(ABC):
@@ -74,23 +72,23 @@ class Scene(ABC):
             self.handle_events()
             self.draw()
 
+
 # Instancia de ejecucion del tablero del nonograma
 class Game(Scene):
-    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, solution=None):
+    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, solution=None, current_state=None):
         super().__init__(frame_manager)
         self.clock = pygame.time.Clock()
+        self.solution = solution
+        self.current_state = current_state if current_state else [[0] * grid_size for _ in range(grid_size)]
 
         cell_size = min(
             SettingsManager.WIDTH.value // grid_size,
             SettingsManager.HEIGHT.value // grid_size
         )
 
-        if solution is not None:
-            logical_board = LogicalBoard(grid_size,solution)  # Crear una instancia de LogicalBoard
-        else:
-            logical_board = LogicalBoard(np.zeros((grid_size, grid_size)))  # o alguna lógica para inicializar
+        logical_board = LogicalBoard(grid_size, solution)  # Crear una instancia de LogicalBoard
 
-        self.board = Board(grid_size,WIDTH,HEIGHT,logical_board)  # Usa el tamaño del grid recibido
+        self.board = Board(grid_size, WIDTH, HEIGHT, logical_board, self, current_state)  # Usa el tamaño del grid reci
         self.backButton = Button(1000, 500, 'Back', self.font)
         self.saveButton = Button(1000, 450, 'Save', self.font)
         self.music_button = ToggleButton(1000, 600, text=None, font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
@@ -116,7 +114,7 @@ class Game(Scene):
                         self.running = False
                     elif self.saveButton.is_over(mouse_pos):
                         filename = 'saved_board'
-                        if self.board.guardar(filename):
+                        if self.board.guardar(filename, self.solution):
                             print("Tablero guardado correctamente.")
                         else:
                             print("Error al guardar el tablero.")
@@ -138,6 +136,7 @@ class Game(Scene):
         self.saveButton.draw(self.frame_manager.screen)
         self.music_button.draw(self.frame_manager.screen)
         pygame.display.flip()
+
 
 class LogicalBoard:
     def __init__(self, grid_size,solution=None):
@@ -196,6 +195,7 @@ class LogicalBoard:
 
         return carray
 
+
 # Seleccion de niveles
 class Levels(Scene):
     def __init__(self, frame_manager):
@@ -237,7 +237,6 @@ class Levels(Scene):
                 self.running = False
                 self.frame_manager.current_scene = None
 
-
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
@@ -273,6 +272,7 @@ class Levels(Scene):
         self.music_button.draw(self.frame_manager.screen)
         # Actualiza la ventana
         pygame.display.flip()
+
 
 # Menú Principal
 class Menu(Scene):
@@ -317,13 +317,9 @@ class Menu(Scene):
                         # silenciar música cuando se presiona el botón de música
                         self.audio_manager.mute()
 
-
-
-
     def draw(self):
         
         self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
-
 
         # Dibuja los elementos en la pantalla
         self.mainTitle.draw(self.frame_manager.screen)
@@ -333,13 +329,16 @@ class Menu(Scene):
         self.music_button.draw(self.frame_manager.screen)
         pygame.display.flip()  # Actualiza la ventana
 
+
 class Nonos(Scene):
     def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, ):
         super().__init__(frame_manager)
         self.grid_size = grid_size
         self.button_custom = Button(650, 80, 'Personalizado', self.font,width=200,height=60)
         self.backButton = Button(50, 600, 'Back', self.font)
+        self.load_button = Button(50, 525, 'Load', self.font)
         self.buttons = []
+        self.load_buttons = []
 
         # Crear botones de cada nonograma solución dentro de la carpeta solutions
         folder_path = os.path.join('solutions',f's_{grid_size}x{grid_size}')
@@ -370,8 +369,10 @@ class Nonos(Scene):
             # Manejar eventos para los botones
             for button in self.buttons:
                 button.handle_event(event)
+
             self.button_custom.handle_event(event)
             self.backButton.handle_event(event)
+            self.load_button.handle_event(event)
 
             if event.type == pygame.QUIT:
                 self.running = False
@@ -386,28 +387,89 @@ class Nonos(Scene):
                     elif self.button_custom.is_over(mouse_pos):
                         self.frame_manager.switch_to(Levels(self.frame_manager)) # Por el momento cambia a ventana Levels
                         self.running = False
+                    elif self.load_button.is_over(mouse_pos):
+                        self.open_saved_files()
+                        self.running = False
+
                     # Verificar si se hizo click en cualquiera de los botones de la lista
                     else:
                         for i,button in enumerate(self.buttons):
                             if button.is_over(mouse_pos):
                                 solution = self.IniciarNono(i)
                                 print(f"Se cargó la solución {i+1}.")
-                                self.frame_manager.switch_to(Game(self.frame_manager,self.grid_size, solution=solution))
+                                current_state = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+                                self.frame_manager.switch_to(Game(self.frame_manager, self.grid_size, solution=solution,current_state=current_state))
                                 self.running = False
                         break
 
+    def open_saved_files(self):
+        # Directorio de archivos guardados según el tamaño del tablero
+        saved_files_directory = os.path.join('saved_files', f'saved_files_{self.grid_size}x{self.grid_size}')
 
+        if not os.path.exists(saved_files_directory):
+            print(f"No hay archivos guardados para tableros de {self.grid_size}x{self.grid_size}.")
+            return
+
+        # Mostrar los archivos disponibles
+        saved_files = [file for file in os.listdir(saved_files_directory) if file.endswith('.pkl')]
+        if not saved_files:
+            print("No hay archivos guardados disponibles.")
+            return
+
+        # Llenar la lista de botones para los archivos guardados
+        for i, file in enumerate(saved_files):
+            button = Button(50, 30 + (i + 1) * 90, file, self.font, width=300, height=60)
+            self.load_buttons.append((button, os.path.join(saved_files_directory, file)))
+
+        # Mostrar pantalla para seleccionar archivo
+        self.running = True
+        while self.running:
+            for event in pygame.event.get():
+                self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
+                for button, path in self.load_buttons:
+                    button.handle_event(event)
+                    button.draw(self.frame_manager.screen)
+
+                pygame.display.flip()
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = pygame.mouse.get_pos()
+                    for button, path in self.load_buttons:
+                        if button.is_over(mouse_pos):
+                            self.load_game(path)
+                            self.running = False
+                elif event.type == pygame.QUIT:
+                    self.running = False
+                    self.frame_manager.current_scene = None
+
+    def load_game(self, file_path):
+        try:
+            with open(file_path, 'rb') as file:
+                saved_data = pickle.load(file)
+                current_state = saved_data['current_state']
+                solution = saved_data['solution']
+
+            current_state = current_state.tolist() if hasattr(current_state, 'tolist') else current_state
+            solution = solution.tolist() if hasattr(solution, 'tolist') else solution
+
+            # Cambia a la escena del juego con el estado cargado
+            self.frame_manager.switch_to(
+                Game(self.frame_manager, self.grid_size, solution=solution, current_state=current_state))
+        except Exception as e:
+            print(f"Error al cargar el archivo guardado: {e}")
 
     def draw(self):
         self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
         # Dibuja los botones de cada nonograma a resolver
         self.button_custom.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
+        self.load_button.draw(self.frame_manager.screen)
         for button in self.buttons:
             button.draw(self.frame_manager.screen)
 
         # Actualiza la ventana
         pygame.display.flip()
+
 
 class FrameManager:
     def __init__(self):
@@ -421,6 +483,7 @@ class FrameManager:
     def run(self):
         while self.current_scene is not None:
             self.current_scene.run()
+
 
 class Cell:
     def __init__(self):
@@ -449,10 +512,11 @@ class Cell:
         else:
             return SettingsManager.DEFAULT_COLOR.value
 
+
 class Board:
     save_cont = {} # Diccionario para llevar la cuenta de los archivos guardados.
 
-    def __init__(self, grid_size, frame_width, frame_height, logicalboard):
+    def __init__(self, grid_size, frame_width, frame_height, logicalboard, game_instance, current_state=None):
         self.cell_size = min(frame_width // grid_size, frame_height // grid_size)
         self.grid_size = grid_size
         self.logical_board = logicalboard
@@ -464,6 +528,17 @@ class Board:
         self.carray = self.logical_board.find_numbers_c()
 
         self.font = pygame.font.SysFont(None, 36)
+        self.game_instance = game_instance
+
+        # Inicializa el tablero
+        self.board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
+        if current_state:
+            for row in range(grid_size):
+                for col in range(grid_size):
+                    if current_state[row][col] == 1:
+                        self.board[row][col].clicked = True
+                    elif current_state[row][col] == -1:
+                        self.board[row][col].marked = True
 
     def draw(self, surface):
         board_width = self.grid_size * self.cell_size
@@ -508,25 +583,28 @@ class Board:
                 ))
 
     def handle_click(self, pos, num_click):  # pos son coordenadas (x,y) en pygame. num_click: 1 right, 2 left
-        if num_click == 1:
-            row = (pos[1] - self.offset_y) // self.cell_size
-            col = (pos[0] - self.offset_x) // self.cell_size
-            if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
-                self.board[row][col].click()
-        elif num_click == 2:
-            row = (pos[1] - self.offset_y) // self.cell_size
-            col = (pos[0] - self.offset_x) // self.cell_size
-            if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
-                self.board[row][col].mark()
+        row=(pos[1] - self.offset_y) // self.cell_size
+        col=(pos[0] - self.offset_x) // self.cell_size
 
-    def guardar(self, filename):
-        # Obtener el directorio del proyecto
+        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+            if num_click == 1:
+                self.board[row][col].click()
+                self.game_instance.current_state[row][col]=1 if self.board[row][col].clicked else 0
+            elif num_click == 2:
+                self.board[row][col].mark()
+                self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
+
+    def guardar(self, filename, solution):
         proyecto_directory = os.path.dirname(os.path.abspath(__file__))
         saved_files_directory = os.path.join(proyecto_directory, 'saved_files')
 
+        #Subdirectorio por tamaño
+        subdirectory = f'saved_files_{self.grid_size}x{self.grid_size}'
+        subdirectory_path = os.path.join(saved_files_directory, subdirectory)
+
         # Crear el subdirectorio si no existe
-        if not os.path.exists(saved_files_directory):
-            os.makedirs(saved_files_directory)
+        if not os.path.exists(subdirectory_path):
+            os.makedirs(subdirectory_path)
 
         # Agregar timestamp al nombre del archivo
         if self.grid_size not in Board.save_cont:
@@ -534,17 +612,23 @@ class Board:
         else:
             Board.save_cont[self.grid_size] += 1
 
-        full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl" # Ejemplo: saved_board_5x5_1.pkl
-        full_path = os.path.join(saved_files_directory, full_name) # Combinar ruta del subdirectorio con nombre archivo
+        full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl"
+        full_path = os.path.join(subdirectory_path, full_name)
+
+        save_data = {
+            'current_state': self.game_instance.current_state,
+            'solution': solution
+        }
 
         try:
             print("Guardando archivo en:", full_path)
-            with open(full_path, 'wb') as file: # Abre en modo binario para guardar con pickle
-                pickle.dump(self.board, file) # Guarda el tablero en el archivo
+            with open(full_path, 'wb') as file:
+                pickle.dump(save_data, file)
             return True
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
             return False
+
 
 class Options(Scene):
     def __init__(self, frame_manager):
@@ -575,7 +659,6 @@ class Options(Scene):
             # Ajusta el volumen de la música
             audio_manager.ajustar_volumen(self.slider.value)
 
-
     def draw(self):
         self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
         self.slider.draw(self.frame_manager.screen)
@@ -585,8 +668,6 @@ class Options(Scene):
         font = pygame.font.Font("fonts/monogram.ttf", 36)
         text = font.render(f"Volume: {int(self.slider.value * 100)}%", True, (255, 255, 255))
         self.frame_manager.screen.blit(text, (self.slider.x, self.slider.y - 40))
-
-
 
         # Deslizar el texto del nombre del archivo
         self.draw_sliding_text(self.song_name)
