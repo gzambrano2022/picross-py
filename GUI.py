@@ -91,7 +91,7 @@ class Game(Scene):
         self.board = Board(grid_size, WIDTH, HEIGHT, logical_board, self, current_state)  # Usa el tamaño del grid reci
         self.backButton = Button(1000, 500, 'Back', self.font)
         self.saveButton = Button(1000, 450, 'Save', self.font)
-        self.checkButton = Button(1000, 400, 'Check', self.font)
+        self.checkButton = Button(1000, 300, 'Check', self.font, width=140, height=50)
         self.music_button = ToggleButton(1000, 600, text=None, font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
         self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
 
@@ -124,6 +124,9 @@ class Game(Scene):
                     elif self.checkButton.is_over(mouse_pos):
                         if self.board.check_solution(self.board.grid_size):
                             self.board.show_completion_message()
+                        else:
+                            self.board.show_unsucess_message()
+
                     elif self.music_button.is_over(mouse_pos):
                         # silenciar música cuando se presiona el botón de música
                         self.audio_manager.mute()
@@ -606,12 +609,10 @@ class Board:
                 self.board[row][col].click()
                 self.game_instance.current_state[row][col] = 1 if self.board[row][col].clicked else 0
                 self.board_l[row][col] = 1 if self.board[row][col].clicked else 0
-                print(f'marcaste la celda {row},{col}')
             elif num_click == 2:
                 self.board[row][col].mark()
                 self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
                 self.board_l[row][col] = 0
-                print(f'desmarcaste la celda {row},{col}')
 
     def check_solution(self, grid_size):
         for row in range(grid_size):
@@ -621,19 +622,27 @@ class Board:
         return True
 
     def show_completion_message(self):
-        """
-        Muestra un mensaje en pantalla indicando que el tablero ha sido completado.
-        """
-        print("¡Tablero completado con éxito!")
-        # Si usas pygame para gráficos, podrías mostrar un mensaje en pantalla:
-        # Por ejemplo:
-        font = pygame.font.SysFont(None, 48)
+        font = pygame.font.SysFont(None, 60)
         message = font.render("¡Tablero completado!", True, (0, 255, 0))
         surface = pygame.display.get_surface()
         rect = message.get_rect(center=(SettingsManager.WIDTH.value // 2, SettingsManager.HEIGHT.value // 2))
+        background_rect = rect.inflate(50,50)
+        pygame.draw.rect(surface, (25, 25, 35), background_rect)
         surface.blit(message, rect)
         pygame.display.flip()
-        pygame.time.wait(3000)  # Espera 3 segundos antes de continuar
+        pygame.time.wait(1000)  # Espera 3 segundos antes de continuar
+
+    def show_unsucess_message(self):
+        font = pygame.font.SysFont(None, 60)
+        message = font.render("Intentalo nuevamente", True, (0, 255, 0))
+        surface = pygame.display.get_surface()
+        rect = message.get_rect(center=(SettingsManager.WIDTH.value // 2, SettingsManager.HEIGHT.value // 2))
+        background_rect = rect.inflate(50, 50)
+        pygame.draw.rect(surface, (25, 25, 35), background_rect)
+        surface.blit(message, rect)
+        pygame.display.flip()
+        pygame.time.wait(1000)  # Espera 1 segundo antes de continuar
+
 
     def guardar(self, filename, solution):
         proyecto_directory = os.path.dirname(os.path.abspath(__file__))
