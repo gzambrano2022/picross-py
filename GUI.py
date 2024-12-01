@@ -151,7 +151,6 @@ class Game(Scene):
 class LogicalBoard:
     def __init__(self, grid_size,solution=None):
         self.grid_size = grid_size
-        self.board_l = np.zeros((grid_size, grid_size))
 
         if solution is not None:
             self.board_s = np.array(solution)
@@ -204,9 +203,6 @@ class LogicalBoard:
             carray.append(array)
 
         return carray
-
-    def get_matrix(self):
-        return self.board_l
 
     def get_solution(self):
         return self.board_s
@@ -581,7 +577,6 @@ class Board:
         self.offset_x = (SettingsManager.WIDTH.value - self.grid_size * self.cell_size) // 2
         self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2 + 75
 
-        self.board_l= self.logical_board.get_matrix()
         self.board_s= self.logical_board.get_solution()
         self.rarray = self.logical_board.find_numbers_r()
         self.carray = self.logical_board.find_numbers_c()
@@ -649,16 +644,14 @@ class Board:
             if num_click == 1:
                 self.board[row][col].click()
                 self.game_instance.current_state[row][col] = 1 if self.board[row][col].clicked else 0
-                self.board_l[row][col] = 1 if self.board[row][col].clicked else 0
             elif num_click == 2:
                 self.board[row][col].mark()
                 self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
-                self.board_l[row][col] = 0
 
     def check_solution(self, grid_size):
         for row in range(grid_size):
             for col in range(grid_size):
-                if self.board_l[row][col] != self.board_s[row][col]:
+                if self.game_instance.current_state[row][col] != self.board_s[row][col]:
                     return False
         return True
 
