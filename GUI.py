@@ -91,6 +91,7 @@ class Game(Scene):
         self.board = Board(grid_size, WIDTH, HEIGHT, logical_board, self, current_state)  # Usa el tamaño del grid reci
         self.backButton = Button(1000, 500, 'Back', self.font)
         self.saveButton = Button(1000, 450, 'Save', self.font)
+        self.checkButton = Button(1000, 300, 'Check', self.font, width=140, height=50)
         self.music_button = ToggleButton(1000, 600, text=None, font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
         self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
 
@@ -100,7 +101,9 @@ class Game(Scene):
             # Manejar eventos para los botones
             self.saveButton.handle_event(event)
             self.backButton.handle_event(event)
+            self.checkButton.handle_event(event)
             self.music_button.handle_event(event)
+            self.checkButton.handle_event(event)
 
             if event.type == pygame.QUIT:
                 self.running = False
@@ -118,6 +121,12 @@ class Game(Scene):
                             print("Tablero guardado correctamente.")
                         else:
                             print("Error al guardar el tablero.")
+                    elif self.checkButton.is_over(mouse_pos):
+                        if self.board.check_solution(self.board.grid_size):
+                            self.board.show_completion_message()
+                        else:
+                            self.board.show_unsucess_message()
+
                     elif self.music_button.is_over(mouse_pos):
                         # silenciar música cuando se presiona el botón de música
                         self.audio_manager.mute()
@@ -134,6 +143,7 @@ class Game(Scene):
         self.board.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
         self.saveButton.draw(self.frame_manager.screen)
+        self.checkButton.draw(self.frame_manager.screen)
         self.music_button.draw(self.frame_manager.screen)
         pygame.display.flip()
 
@@ -141,11 +151,13 @@ class Game(Scene):
 class LogicalBoard:
     def __init__(self, grid_size,solution=None):
         self.grid_size = grid_size
+        self.board_l = np.zeros((grid_size, grid_size))
 
         if solution is not None:
-            self.board_l = np.array(solution)
+            self.board_s = np.array(solution)
         else:
-            self.board_l = np.zeros((grid_size,grid_size))
+            self.board_s = np.zeros((grid_size,grid_size))
+
 
     def find_numbers_r(self):
         rarray = []
@@ -155,7 +167,7 @@ class LogicalBoard:
             cont  = 0
             array = []
             for j in range(self.grid_size):
-                if self.board_l[i][j] == 1:
+                if self.board_s[i][j] == 1:
                     cont += 1
                 else:
                     if cont>0:
@@ -178,7 +190,7 @@ class LogicalBoard:
             cont = 0
             array = []
             for j in range(self.grid_size):
-                if self.board_l[j][i] == 1:
+                if self.board_s[j][i] == 1:
                     cont += 1
                 else:
                     if cont > 0:
@@ -192,6 +204,12 @@ class LogicalBoard:
             carray.append(array)
 
         return carray
+
+    def get_matrix(self):
+        return self.board_l
+
+    def get_solution(self):
+        return self.board_s
 
 
 # Seleccion de niveles
@@ -522,6 +540,8 @@ class Board:
         self.offset_x = (SettingsManager.WIDTH.value - self.grid_size * self.cell_size) // 2
         self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2 + 75
 
+        self.board_l= self.logical_board.get_matrix()
+        self.board_s= self.logical_board.get_solution()
         self.rarray = self.logical_board.find_numbers_r()
         self.carray = self.logical_board.find_numbers_c()
 
@@ -581,16 +601,48 @@ class Board:
                 ))
 
     def handle_click(self, pos, num_click):  # pos son coordenadas (x,y) en pygame. num_click: 1 right, 2 left
-        row=(pos[1] - self.offset_y) // self.cell_size
-        col=(pos[0] - self.offset_x) // self.cell_size
+        row = (pos[1] - self.offset_y) // self.cell_size
+        col = (pos[0] - self.offset_x) // self.cell_size
 
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             if num_click == 1:
                 self.board[row][col].click()
-                self.game_instance.current_state[row][col]=1 if self.board[row][col].clicked else 0
+                self.game_instance.current_state[row][col] = 1 if self.board[row][col].clicked else 0
+                self.board_l[row][col] = 1 if self.board[row][col].clicked else 0
             elif num_click == 2:
                 self.board[row][col].mark()
                 self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
+                self.board_l[row][col] = 0
+
+    def check_solution(self, grid_size):
+        for row in range(grid_size):
+            for col in range(grid_size):
+                if self.board_l[row][col] != self.board_s[row][col]:
+                    return False
+        return True
+
+    def show_completion_message(self):
+        font = pygame.font.SysFont(None, 60)
+        message = font.render("¡Tablero completado!", True, (0, 255, 0))
+        surface = pygame.display.get_surface()
+        rect = message.get_rect(center=(SettingsManager.WIDTH.value // 2, SettingsManager.HEIGHT.value // 2))
+        background_rect = rect.inflate(50,50)
+        pygame.draw.rect(surface, (25, 25, 35), background_rect)
+        surface.blit(message, rect)
+        pygame.display.flip()
+        pygame.time.wait(1000)  # Espera 3 segundos antes de continuar
+
+    def show_unsucess_message(self):
+        font = pygame.font.SysFont(None, 60)
+        message = font.render("Intentalo nuevamente", True, (0, 255, 0))
+        surface = pygame.display.get_surface()
+        rect = message.get_rect(center=(SettingsManager.WIDTH.value // 2, SettingsManager.HEIGHT.value // 2))
+        background_rect = rect.inflate(50, 50)
+        pygame.draw.rect(surface, (25, 25, 35), background_rect)
+        surface.blit(message, rect)
+        pygame.display.flip()
+        pygame.time.wait(1000)  # Espera 1 segundo antes de continuar
+
 
     def guardar(self, filename, solution):
         proyecto_directory = os.path.dirname(os.path.abspath(__file__))
