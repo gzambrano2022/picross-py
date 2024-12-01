@@ -219,6 +219,7 @@ class Levels(Scene):
         super().__init__(frame_manager)
         self.button_5x5 = Button(185, 200, '5x5', self.font)
         self.button_10x10 = Button(565, 200, '10x10', self.font)
+        self.button_customs = Button(565, 600, 'Custom', self.font)
         self.button_15x15 = Button(935, 200, '15x15', self.font)
         self.backButton = Button(50, 600, 'Back', self.font)
         self.music_button = ToggleButton(1000,600, text=None,font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
@@ -268,6 +269,9 @@ class Levels(Scene):
                     elif self.button_15x15.is_over(mouse_pos):
                         self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=15))  # nonogramas de tam 15x15
                         self.running = False
+                    elif self.button_customs.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Customs(self.frame_manager))
+                        self.running = False
                     elif self.music_button.is_over(mouse_pos):
                         # silenciar música cuando se presiona el botón de música
                         self.audio_manager.mute()
@@ -278,6 +282,7 @@ class Levels(Scene):
         self.button_5x5.draw(self.frame_manager.screen)
         self.button_10x10.draw(self.frame_manager.screen)
         self.button_15x15.draw(self.frame_manager.screen)
+        self.button_customs.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
         self.SubTitle.draw(self.frame_manager.screen)
 
@@ -289,7 +294,43 @@ class Levels(Scene):
         # Actualiza la ventana
         pygame.display.flip()
 
+# Menú al clickear botón Customs en Levels
+class Customs(Scene):
+    def __init__(self, frame_manager ):
+        super().__init__(frame_manager)
+        self.button_create = Button(565, 200, 'Crear', self.font)
+        self.button_cargar = Button(565, 270, 'Cargar', self.font)
+        self.backButton = Button(50, 600, 'Back', self.font)
+        self.music_button = ToggleButton(1000,600, text=None,font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
+        self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
+    def draw(self):
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
+        self.button_create.draw(self.frame_manager.screen)
+        self.button_cargar.draw(self.frame_manager.screen)
+        self.backButton.draw(self.frame_manager.screen)
+        self.music_button.draw(self.frame_manager.screen)
+        pygame.display.flip()
+    def handle_events(self):
+        for event in pygame.event.get():
+            # Manejar eventos para los botones
+            self.button_create.handle_event(event)
+            self.button_cargar.handle_event(event)
+            self.backButton.handle_event(event)
+            self.music_button.handle_event(event)
 
+            if event.type == pygame.QUIT:
+                self.running = False
+                self.frame_manager.current_scene = None
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.backButton.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Levels(self.frame_manager))  # Cambia a ventana Menu
+                        self.running = False  # Detenemos la ventana
+                    elif self.music_button.is_over(mouse_pos):
+                        # silenciar música cuando se presiona el botón de música
+                        self.audio_manager.mute()
 # Menú Principal
 class Menu(Scene):
     def __init__(self, frame_manager ):
