@@ -658,7 +658,7 @@ class Board:
     def check_solution(self, grid_size):
         for row in range(grid_size):
             for col in range(grid_size):
-                if self.game_instance.current_state[row][col] != self.board_s[row][col]:
+                if self.game_instance.current_state[row][col] != self.board_s[row][col] and self.game_instance.current_state[row][col] != -1:
                     return False
         return True
 
