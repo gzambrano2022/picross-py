@@ -16,7 +16,6 @@ class SettingsManager(Enum):
     HEIGHT = 720
     DEFAULT_COLOR = (255, 255, 255)  # blanco
     CLICKED_COLOR = (0, 0, 0)  # negro
-    MARKED_COLOR = (255, 0, 0)  # Rojo
     NUMBERS_COLOR = (250, 250, 114) # Amarillo claro
     BACKGROUND_COLOR = (25, 25, 35) # Gris Azulado
 
@@ -155,7 +154,6 @@ class LogicalBoard:
             else:
                 self.board_s = np.zeros((grid_size,grid_size))
 
-
     def find_numbers_r(self):
         rarray = []
 
@@ -201,9 +199,6 @@ class LogicalBoard:
             carray.append(array)
 
         return carray
-
-    def get_matrix(self):
-        return self.board_l
 
     def get_solution(self):
         return self.board_s
@@ -723,10 +718,15 @@ class Cell:
     def get_color(self):
         if self.clicked:
             return SettingsManager.CLICKED_COLOR.value
-        elif self.marked:
-            return SettingsManager.MARKED_COLOR.value
         else:
             return SettingsManager.DEFAULT_COLOR.value
+
+    def draw_x(self, surface, x, y, cell_size):
+        # ruta a la imagen de "X"
+        x_image_path =os.path.join("imagenes gui", "icons", "X.png")
+        x_image = pygame.image.load(x_image_path)
+        x_image = pygame.transform.scale(x_image, (cell_size, cell_size))
+        surface.blit(x_image, (x, y))
 
 
 class Board:
@@ -740,7 +740,6 @@ class Board:
         self.offset_x = (SettingsManager.WIDTH.value - self.grid_size * self.cell_size) // 2
         self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2 + 75
 
-        self.board_l= self.logical_board.get_matrix()
         self.board_s= self.logical_board.get_solution()
         self.rarray = self.logical_board.find_numbers_r()
         self.carray = self.logical_board.find_numbers_c()
@@ -769,6 +768,9 @@ class Board:
                     self.offset_x + col * self.cell_size,  # Coordenada x ajustada
                     self.offset_y + row * self.cell_size,  # Coordenada y ajustada
                     self.cell_size - 2, self.cell_size - 2))  # Tamaño de la celda con un borde pequeño
+                if cell.marked:
+                    cell.draw_x(surface, self.offset_x + col * self.cell_size, self.offset_y + row * self.cell_size, self.cell_size)
+
         # Dibujar lineas de separacion (cada 5x5)
         line_color = (0,0,0)
         for i in range(0, self.grid_size+1,5):
@@ -808,16 +810,14 @@ class Board:
             if num_click == 1:
                 self.board[row][col].click()
                 self.game_instance.current_state[row][col] = 1 if self.board[row][col].clicked else 0
-                self.board_l[row][col] = 1 if self.board[row][col].clicked else 0
             elif num_click == 2:
                 self.board[row][col].mark()
                 self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
-                self.board_l[row][col] = 0
 
     def check_solution(self, grid_size):
         for row in range(grid_size):
             for col in range(grid_size):
-                if self.board_l[row][col] != self.board_s[row][col]:
+                if self.game_instance.current_state[row][col] != self.board_s[row][col] and self.game_instance.current_state[row][col] != -1:
                     return False
         return True
 
