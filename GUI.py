@@ -16,7 +16,6 @@ class SettingsManager(Enum):
     HEIGHT = 720
     DEFAULT_COLOR = (255, 255, 255)  # blanco
     CLICKED_COLOR = (0, 0, 0)  # negro
-    MARKED_COLOR = (255, 0, 0)  # Rojo
     NUMBERS_COLOR = (250, 250, 114) # Amarillo claro
     BACKGROUND_COLOR = (25, 25, 35) # Gris Azulado
 
@@ -81,12 +80,7 @@ class Game(Scene):
         self.solution = solution
         self.current_state = current_state if current_state else [[0] * grid_size for _ in range(grid_size)]
 
-        cell_size = min(
-            SettingsManager.WIDTH.value // grid_size,
-            SettingsManager.HEIGHT.value // grid_size
-        )
-
-        logical_board = LogicalBoard(grid_size, solution)  # Crear una instancia de LogicalBoard
+        logical_board = LogicalBoard(grid_size, False, solution)  # Crear una instancia de LogicalBoard
 
         self.board = Board(grid_size, WIDTH, HEIGHT, logical_board, self, current_state)  # Usa el tamaño del grid reci
         self.backButton = Button(1000, 500, 'Back', self.font)
@@ -149,15 +143,16 @@ class Game(Scene):
 
 
 class LogicalBoard:
-    def __init__(self, grid_size,solution=None):
+    def __init__(self, grid_size, sandbox, solution=None): # sandbox es true o false dependiendo de si se ejecuta para customs o no
         self.grid_size = grid_size
         self.board_l = np.zeros((grid_size, grid_size))
-
-        if solution is not None:
-            self.board_s = np.array(solution)
-        else:
-            self.board_s = np.zeros((grid_size,grid_size))
-
+        self.sandbox = sandbox
+        # si no es sandbox, funcionar normalmente
+        if not sandbox:
+            if solution is not None:
+                self.board_s = np.array(solution)
+            else:
+                self.board_s = np.zeros((grid_size,grid_size))
 
     def find_numbers_r(self):
         rarray = []
@@ -205,9 +200,6 @@ class LogicalBoard:
 
         return carray
 
-    def get_matrix(self):
-        return self.board_l
-
     def get_solution(self):
         return self.board_s
 
@@ -219,6 +211,7 @@ class Levels(Scene):
         super().__init__(frame_manager)
         self.button_5x5 = Button(185, 200, '5x5', self.font)
         self.button_10x10 = Button(565, 200, '10x10', self.font)
+        self.button_customs = Button(565, 600, 'Custom', self.font)
         self.button_15x15 = Button(935, 200, '15x15', self.font)
         self.backButton = Button(50, 600, 'Back', self.font)
         self.music_button = ToggleButton(1000,600, text=None,font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
@@ -268,6 +261,9 @@ class Levels(Scene):
                     elif self.button_15x15.is_over(mouse_pos):
                         self.frame_manager.switch_to(Nonos(self.frame_manager,grid_size=15))  # nonogramas de tam 15x15
                         self.running = False
+                    elif self.button_customs.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Customs(self.frame_manager))
+                        self.running = False
                     elif self.music_button.is_over(mouse_pos):
                         # silenciar música cuando se presiona el botón de música
                         self.audio_manager.mute()
@@ -278,6 +274,7 @@ class Levels(Scene):
         self.button_5x5.draw(self.frame_manager.screen)
         self.button_10x10.draw(self.frame_manager.screen)
         self.button_15x15.draw(self.frame_manager.screen)
+        self.button_customs.draw(self.frame_manager.screen)
         self.backButton.draw(self.frame_manager.screen)
         self.SubTitle.draw(self.frame_manager.screen)
 
@@ -289,6 +286,204 @@ class Levels(Scene):
         # Actualiza la ventana
         pygame.display.flip()
 
+# Menú al clickear botón Customs en Levels
+class Customs(Scene):
+    def __init__(self, frame_manager ):
+        super().__init__(frame_manager)
+        self.button_create = Button(565, 200, 'Crear', self.font)
+        self.button_cargar = Button(565, 270, 'Cargar', self.font)
+        self.backButton = Button(50, 600, 'Back', self.font)
+        self.music_button = ToggleButton(1000,600, text=None,font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
+        self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
+    def draw(self):
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
+        self.button_create.draw(self.frame_manager.screen)
+        self.button_cargar.draw(self.frame_manager.screen)
+        self.backButton.draw(self.frame_manager.screen)
+        self.music_button.draw(self.frame_manager.screen)
+        pygame.display.flip()
+    def handle_events(self):
+        for event in pygame.event.get():
+            # Manejar eventos para los botones
+            self.button_create.handle_event(event)
+            self.button_cargar.handle_event(event)
+            self.backButton.handle_event(event)
+            self.music_button.handle_event(event)
+
+            if event.type == pygame.QUIT:
+                self.running = False
+                self.frame_manager.current_scene = None
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.backButton.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Levels(self.frame_manager))  # Cambia a ventana Menu
+                        self.running = False  # Detenemos la ventana
+                    elif self.button_create.is_over(mouse_pos):
+                        self.frame_manager.switch_to(SizeSelect(self.frame_manager))
+                        self.running = False
+                    elif self.music_button.is_over(mouse_pos):
+                        # silenciar música cuando se presiona el botón de música
+                        self.audio_manager.mute()
+
+class BoardSandbox:
+    def __init__(self, grid_size, frame_width, frame_height, current_state=None):
+        self.cell_size = min(frame_width // grid_size, frame_height // grid_size)
+        self.grid_size = grid_size
+        self.board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
+        self.offset_x = (SettingsManager.WIDTH.value - self.grid_size * self.cell_size) // 2
+        self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2 + 75
+
+        self.font = pygame.font.SysFont(None, 36)
+
+        # Inicializa el tablero
+        self.board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
+        if current_state:
+            for row in range(grid_size):
+                for col in range(grid_size):
+                    if current_state[row][col] == 1:
+                        self.board[row][col].clicked = True
+                    elif current_state[row][col] == -1:
+                        self.board[row][col].marked = True
+
+    def draw(self, surface):
+        board_width = self.grid_size * self.cell_size
+
+        # Dibujar las celdas
+        for row, rowOfCells in enumerate(self.board):
+            for col, cell in enumerate(rowOfCells):
+                color = cell.get_color()
+                pygame.draw.rect(surface, color, (
+                    self.offset_x + col * self.cell_size,  # Coordenada x ajustada
+                    self.offset_y + row * self.cell_size,  # Coordenada y ajustada
+                    self.cell_size - 2, self.cell_size - 2))  # Tamaño de la celda con un borde pequeño
+        # Dibujar lineas de separacion (cada 5x5)
+        line_color = (0,0,0)
+        for i in range(0, self.grid_size+1,5):
+            # Línea vertical cada 5 celdas
+            pygame.draw.line(surface, line_color,
+                             (self.offset_x + i * self.cell_size, self.offset_y),
+                             (self.offset_x + i * self.cell_size, self.offset_y + board_width), 3)
+            # Línea horizontal cada 5 celdas
+            pygame.draw.line(surface, line_color,
+                             (self.offset_x, self.offset_y + i * self.cell_size),
+                             (self.offset_x + board_width, self.offset_y + i * self.cell_size), 3)
+
+    def handle_click(self, pos, num_click):  # pos son coordenadas (x,y) en pygame. num_click: 1 right, 2 left
+        row = (pos[1] - self.offset_y) // self.cell_size
+        col = (pos[0] - self.offset_x) // self.cell_size
+
+        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+            if num_click == 1:
+                self.board[row][col].click()
+            elif num_click == 2:
+                self.board[row][col].mark()
+
+class SizeSelect(Scene):
+    def __init__(self, frame_manager):
+        super().__init__(frame_manager)
+        self.button_5x5 = Button(185, 200, '5x5', self.font)
+        self.button_10x10 = Button(565, 200, '10x10', self.font)
+        self.button_15x15 = Button(935, 200, '15x15', self.font)
+        self.backButton = Button(50, 600, 'Back', self.font)
+        self.music_button = ToggleButton(1000,600, text=None,font=None, icon_path_1="imagenes gui/icons/Speaker-Crossed.png", icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
+        self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            self.button_5x5.handle_event(event)
+            self.button_10x10.handle_event(event)
+            self.backButton.handle_event(event)
+            self.music_button.handle_event(event)
+            self.backButton.handle_event(event)
+
+            if event.type == pygame.QUIT:
+                self.running = False
+                self.frame_manager.current_scene = None
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.backButton.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Sandbox(self.frame_manager))  # Cambia a ventana Menu
+                        self.running = False  # Detenemos la ventana
+                    elif self.button_5x5.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Sandbox(self.frame_manager,grid_size=5))  # nonogramas de tam 5x5
+                        self.running = False
+                    elif self.button_10x10.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Sandbox(self.frame_manager,grid_size=10))  # nonogramas de tam 10x10
+                        self.running = False
+                    elif self.button_15x15.is_over(mouse_pos):
+                        self.frame_manager.switch_to(Sandbox(self.frame_manager,grid_size=15))  # nonogramas de tam 15x15
+                        self.running = False
+                    elif self.music_button.is_over(mouse_pos):
+                        # silenciar música cuando se presiona el botón de música
+                        self.audio_manager.mute()
+    def draw(self):
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)
+        self.button_5x5.draw(self.frame_manager.screen)
+        self.button_10x10.draw(self.frame_manager.screen)
+        self.button_15x15.draw(self.frame_manager.screen)
+        self.backButton.draw(self.frame_manager.screen)
+        self.music_button.draw(self.frame_manager.screen)
+        pygame.display.flip()
+
+class Sandbox(Scene):
+    def __init__(self, frame_manager, grid_size=SettingsManager.GRID_SIZE.value, current_state=None):
+        super().__init__(frame_manager)
+        self.clock = pygame.time.Clock()
+        self.current_state = current_state if current_state else [[0] * grid_size for _ in range(grid_size)]
+        self.board = BoardSandbox(grid_size, WIDTH, HEIGHT)  # Usa el tamaño del grid reci
+        self.backButton = Button(1000, 500, 'Back', self.font)
+        self.saveButton = Button(1000, 450, 'Save', self.font)
+        self.checkButton = Button(1000, 300, 'Check', self.font, width=140, height=50)
+        self.music_button = ToggleButton(1000, 600, text=None, font=None,
+                                         icon_path_1="imagenes gui/icons/Speaker-Crossed.png",
+                                         icon_path_2="imagenes gui/icons/Speaker-0.png", width=50, height=50)
+        self.audio_manager = audio_manager  # Guardamos una referencia al AudioManager
+
+    def handle_events(self):
+        for event in pygame.event.get():
+
+            # Manejar eventos para los botones
+            self.saveButton.handle_event(event)
+            self.backButton.handle_event(event)
+            self.music_button.handle_event(event)
+            self.checkButton.handle_event(event)
+
+            if event.type == pygame.QUIT:
+                self.running = False
+                self.frame_manager.current_scene = None
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if self.backButton.is_over(mouse_pos):
+                        self.frame_manager.switch_to(
+                            SizeSelect(self.frame_manager))  # Cambia a ventana al menu de niveles
+                        self.running = False
+                    elif self.saveButton.is_over(mouse_pos):
+                        filename = 'saved_board'
+                        if self.board.guardar(filename, self.solution):
+                            print("Tablero guardado correctamente.")
+                        else:
+                            print("Error al guardar el tablero.")
+                    elif self.music_button.is_over(mouse_pos):
+                        # silenciar música cuando se presiona el botón de música
+                        self.audio_manager.mute()
+                    else:
+                        # Aquí manejamos el clic izquierdo en el tablero
+                        self.board.handle_click(event.pos, 1)  # Pasamos el clic izquierdo (1) a board
+                elif event.button == 3:
+                    self.board.handle_click(event.pos, 2)
+
+    def draw(self):
+        self.frame_manager.screen.fill(SettingsManager.BACKGROUND_COLOR.value)  # Fondo morado oscuro
+        self.board.draw(self.frame_manager.screen)
+        self.backButton.draw(self.frame_manager.screen)
+        self.saveButton.draw(self.frame_manager.screen)
+        self.checkButton.draw(self.frame_manager.screen)
+        self.music_button.draw(self.frame_manager.screen)
+        pygame.display.flip()
 
 # Menú Principal
 class Menu(Scene):
@@ -523,10 +718,15 @@ class Cell:
     def get_color(self):
         if self.clicked:
             return SettingsManager.CLICKED_COLOR.value
-        elif self.marked:
-            return SettingsManager.MARKED_COLOR.value
         else:
             return SettingsManager.DEFAULT_COLOR.value
+
+    def draw_x(self, surface, x, y, cell_size):
+        # ruta a la imagen de "X"
+        x_image_path =os.path.join("imagenes gui", "icons", "X.png")
+        x_image = pygame.image.load(x_image_path)
+        x_image = pygame.transform.scale(x_image, (cell_size, cell_size))
+        surface.blit(x_image, (x, y))
 
 
 class Board:
@@ -540,7 +740,6 @@ class Board:
         self.offset_x = (SettingsManager.WIDTH.value - self.grid_size * self.cell_size) // 2
         self.offset_y = (SettingsManager.HEIGHT.value - self.grid_size * self.cell_size) // 2 + 75
 
-        self.board_l= self.logical_board.get_matrix()
         self.board_s= self.logical_board.get_solution()
         self.rarray = self.logical_board.find_numbers_r()
         self.carray = self.logical_board.find_numbers_c()
@@ -569,6 +768,9 @@ class Board:
                     self.offset_x + col * self.cell_size,  # Coordenada x ajustada
                     self.offset_y + row * self.cell_size,  # Coordenada y ajustada
                     self.cell_size - 2, self.cell_size - 2))  # Tamaño de la celda con un borde pequeño
+                if cell.marked:
+                    cell.draw_x(surface, self.offset_x + col * self.cell_size, self.offset_y + row * self.cell_size, self.cell_size)
+
         # Dibujar lineas de separacion (cada 5x5)
         line_color = (0,0,0)
         for i in range(0, self.grid_size+1,5):
@@ -608,16 +810,14 @@ class Board:
             if num_click == 1:
                 self.board[row][col].click()
                 self.game_instance.current_state[row][col] = 1 if self.board[row][col].clicked else 0
-                self.board_l[row][col] = 1 if self.board[row][col].clicked else 0
             elif num_click == 2:
                 self.board[row][col].mark()
                 self.game_instance.current_state[row][col] = -1 if self.board[row][col].marked else 0
-                self.board_l[row][col] = 0
 
     def check_solution(self, grid_size):
         for row in range(grid_size):
             for col in range(grid_size):
-                if self.board_l[row][col] != self.board_s[row][col]:
+                if self.game_instance.current_state[row][col] != self.board_s[row][col] and self.game_instance.current_state[row][col] != -1:
                     return False
         return True
 
@@ -678,7 +878,40 @@ class Board:
         except Exception as e:
             print(f"Error al guardar el tablero: {e}")
             return False
+    # Misma función de guardar pero para tableros creados por el usuario.
+    def guardar_custom(self, filename):
+        proyecto_directory = os.path.dirname(os.path.abspath(__file__))
+        saved_files_directory = os.path.join(proyecto_directory, 'customs')
 
+        #Subdirectorio por tamaño
+        subdirectory = f'customs_{self.grid_size}x{self.grid_size}'
+        subdirectory_path = os.path.join(saved_files_directory, subdirectory)
+
+        # Crear el subdirectorio si no existe
+        if not os.path.exists(subdirectory_path):
+            os.makedirs(subdirectory_path)
+
+        # Agregar timestamp al nombre del archivo
+        if self.grid_size not in Board.save_cont:
+            Board.save_cont[self.grid_size] = 1
+        else:
+            Board.save_cont[self.grid_size] += 1
+
+        full_name = f"{filename}_{self.grid_size}x{self.grid_size}_{Board.save_cont[self.grid_size]}.pkl"
+        full_path = os.path.join(subdirectory_path, full_name)
+
+        save_data = {
+            'current_state': self.game_instance.current_state,
+        }
+
+        try:
+            print("Guardando archivo en:", full_path)
+            with open(full_path, 'wb') as file:
+                pickle.dump(save_data, file)
+            return True
+        except Exception as e:
+            print(f"Error al guardar el tablero: {e}")
+            return False
 
 class Options(Scene):
     def __init__(self, frame_manager):
